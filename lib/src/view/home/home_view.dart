@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
-import 'package:music/view/music/music_listtile.dart';
+import 'package:music/src/view/music%20tile/music_listtile.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

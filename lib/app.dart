@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:music/view/home_view.dart';
+import 'package:music/src/view/home/home_view.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
