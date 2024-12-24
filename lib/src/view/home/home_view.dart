@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
+import 'package:music/src/view/player%20view/player_view.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
+enum OrderType {
+  name,
+  addingtime,
+  playedNumber,
+  duration,
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   // final contoller = Get.put(PlayerController());
   @override
   Widget build(BuildContext context) {
@@ -33,15 +38,45 @@ class _HomePageState extends State<HomePage> {
                       color: whiteColor,
                     )),
                 PopupMenuButton(
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: whiteColor,
+                  color: Colors.black,
+                  icon: Icon(
+                    Icons.sort,
+                    color: whiteColor,
+                  ),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: OrderType.name,
+                      child: Text(
+                        "Name",
+                        style: fontStyle(15, whiteColor),
+                      ),
                     ),
-                    itemBuilder: (context) => [
-                          PopupMenuItem(child: Text("data")),
-                          PopupMenuItem(child: Text("data")),
-                          PopupMenuItem(child: Text("data")),
-                        ])
+                    PopupMenuItem(
+                      value: OrderType.addingtime,
+                      child: Text(
+                        "Date",
+                        style: fontStyle(15, whiteColor),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: OrderType.playedNumber,
+                      child: Text(
+                        "Number of playing",
+                        style: fontStyle(15, whiteColor),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: OrderType.duration,
+                      child: Text(
+                        "Size",
+                        style: fontStyle(15, whiteColor),
+                      ),
+                    )
+                  ],
+                  onSelected: (value) {
+                    // print(value);
+                  },
+                )
               ],
               centerTitle: true,
               title: Text(
@@ -95,7 +130,11 @@ class _HomePageState extends State<HomePage> {
             SliverList.builder(
               itemCount: 15,
               itemBuilder: (context, index) => MusicListtile(
-                  musicName: "musicName", artistName: "artistName"),
+                  onPressed: () {
+                    Get.to(Player());
+                  },
+                  musicName: "musicName",
+                  artistName: "artistName"),
             )
           ],
         ));

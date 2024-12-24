@@ -7,45 +7,43 @@ class MusicListtile extends StatelessWidget {
     super.key,
     required this.musicName,
     required this.artistName,
+    required this.onPressed,
   });
   final String musicName;
+  final VoidCallback onPressed;
   final String artistName;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(
-        bottom: 2,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(13),
-        color: bgcolor,
-      ),
-      // color: Colors.amber,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
       child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        tileColor: Colors.green,
+        onTap: onPressed,
         leading: Icon(
           Icons.music_note,
           color: whiteColor,
         ),
         title: Text(
-          "Name",
+          musicName,
           style: fontStyle(
             15,
             whiteColor,
           ),
         ),
         subtitle: Text(
-          "Artist name...",
+          artistName,
           style: fontStyle(
             11,
             whiteColor,
           ),
         ),
-        trailing: Icon(
-          Icons.play_arrow,
-          size: 26,
-          color: whiteColor,
-        ),
+        // trailing: Icon(
+        //   Icons.play_arrow,
+        //   size: 26,
+        //   color: whiteColor,
+        // ),
       ),
     );
   }
