@@ -8,10 +8,12 @@ class MusicListtile extends StatelessWidget {
     required this.musicName,
     required this.artistName,
     required this.onPressed,
+    required this.leading,
   });
   final String musicName;
   final VoidCallback onPressed;
   final String artistName;
+  final Widget leading;
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +23,7 @@ class MusicListtile extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         tileColor: Colors.green,
         onTap: onPressed,
-        leading: Icon(
-          Icons.music_note,
-          color: whiteColor,
-        ),
+        leading: leading,
         title: Text(
           musicName,
           style: fontStyle(
