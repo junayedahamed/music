@@ -9,11 +9,13 @@ class MusicListtile extends StatelessWidget {
     required this.artistName,
     required this.onPressed,
     required this.leading,
+    required this.trailing,
   });
   final String musicName;
   final VoidCallback onPressed;
   final String artistName;
   final Widget leading;
+  final Widget trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,8 @@ class MusicListtile extends StatelessWidget {
             whiteColor,
           ),
         ),
+
+        trailing: trailing,
         subtitle: Text(
           artistName,
           style: fontStyle(

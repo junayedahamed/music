@@ -4,10 +4,12 @@ import 'package:get/get_navigation/get_navigation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:music/src/colors/colors.dart';
 import 'package:music/src/view/player%20view/player_buttons.dart';
-import 'package:music/src/view/player%20view/player_functionalities.dart';
+import 'package:music/src/view/player%20view/favourite_button.dart';
 
 class Player extends StatelessWidget {
-  Player({super.key});
+  Player({super.key, required this.musicName, required this.artistName});
+  final String musicName;
+  final String artistName;
   final PlayerFunctionalities playfun = PlayerFunctionalities();
   @override
   Widget build(BuildContext context) {
@@ -54,7 +56,7 @@ class Player extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    "Music name",
+                                    musicName,
                                     style: GoogleFonts.abel(
                                       fontSize: 25,
                                       color: whiteColor,
@@ -66,7 +68,7 @@ class Player extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    "Artist name....",
+                                    artistName,
                                     style: GoogleFonts.abel(
                                       fontSize: 15,
                                       color: whiteColor,
