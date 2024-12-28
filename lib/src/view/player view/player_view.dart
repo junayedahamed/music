@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:music/src/colors/colors.dart';
+import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/view/player%20view/player_buttons.dart';
 import 'package:music/src/view/player%20view/favourite_button.dart';
 
@@ -11,6 +11,8 @@ class Player extends StatelessWidget {
   final String musicName;
   final String artistName;
   final PlayerFunctionalities playfun = PlayerFunctionalities();
+  static double val = 0;
+  final controller = Get.find<PlayerController>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,12 +57,17 @@ class Player extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text(
-                                    musicName,
-                                    style: GoogleFonts.abel(
-                                      fontSize: 25,
-                                      color: whiteColor,
-                                      decorationColor: Colors.amber,
+                                  SizedBox(
+                                    width: 280,
+                                    child: Text(
+                                      maxLines: 2,
+                                      textDirection: TextDirection.ltr,
+                                      musicName,
+                                      style: GoogleFonts.abel(
+                                        fontSize: 12,
+                                        color: whiteColor,
+                                        decorationColor: Colors.amber,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -122,12 +129,14 @@ class Player extends StatelessWidget {
                           SizedBox(
                             width: 335,
                             child: Slider(
-                              value: 0.09,
-                              onChanged: (value) {},
+                              value: 0.0,
+                              onChanged: (value) {
+                                val = value;
+                              },
                             ),
                           ),
                           Text(
-                            "4.00",
+                            val.toString(),
                             style: TextStyle(
                               color: whiteColor,
                               fontSize: 12,
@@ -152,13 +161,23 @@ class Player extends StatelessWidget {
                             ),
                             onPressed: () {},
                           ),
-                          PlayerButtons(
-                            myicon: Icon(
-                              Icons.play_arrow,
-                              size: 40,
-                              color: whiteColor,
+                          Obx(
+                            () => PlayerButtons(
+                              myicon: controller.isplaying.value
+                                  ? Icon(
+                                      Icons.pause,
+                                      size: 40,
+                                      color: whiteColor,
+                                    )
+                                  : Icon(
+                                      Icons.play_arrow,
+                                      size: 40,
+                                      color: whiteColor,
+                                    ),
+                              onPressed: () {
+                                controller.pause();
+                              },
                             ),
-                            onPressed: () {},
                           ),
                           PlayerButtons(
                             myicon: Icon(

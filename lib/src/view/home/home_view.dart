@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/get_instance.dart';
+import 'package:get/get.dart';
 import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/view/home/sort_song_by_order.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
+import 'package:music/src/view/player%20view/player_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 enum Customorder { atoz, ztoa }
@@ -13,7 +13,7 @@ enum Customorder { atoz, ztoa }
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
-  final contoller = Get.put(PlayerController());
+  final PlayerController contoller = Get.put(PlayerController());
   final SortSongByOrder sort = SortSongByOrder();
   @override
   Widget build(BuildContext context) {
@@ -106,36 +106,53 @@ class HomePage extends StatelessWidget {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final song = snapshot.data![index];
-                              return MusicListtile(
-                                leading: QueryArtworkWidget(
-                                  id: song.id,
-                                  type: ArtworkType.AUDIO,
-                                  nullArtworkWidget: Icon(
-                                    Icons.music_note,
-                                    color: whiteColor,
-                                    size: 30,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  contoller.playaudio(
-                                    snapshot.data![index].uri,
-                                    index,
-                                  );
-                                },
-                                musicName: song.title.length > 35
-                                    ? song.title.substring(0, 35)
-                                    : song.title,
-                                artistName: song.artist ?? "Unknown Artist",
-                                trailing: SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.play_arrow,
-                                        size: 18,
-                                        color: whiteColor,
+                              return Obx(
+                                () => MusicListtile(
+                                    leading: QueryArtworkWidget(
+                                      id: song.id,
+                                      type: ArtworkType.AUDIO,
+                                      nullArtworkWidget: Container(
+                                        height: 45,
+                                        width: 45,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.music_note,
+                                          color: whiteColor,
+                                          size: 30,
+                                        ),
                                       ),
-                                    )),
+                                    ),
+                                    onPressed: () {
+                                      // print(contoller.isplaying);
+                                      contoller.playaudio(
+                                        snapshot.data![index].uri,
+                                        index,
+                                      );
+                                      Get.to(Player(
+                                        musicName: song.title,
+                                        artistName:
+                                            song.artist ?? "Unknown Artist",
+                                      ));
+                                    },
+                                    musicName: song.title.length > 35
+                                        ? song.title.substring(0, 35)
+                                        : song.title,
+                                    artistName: song.artist ?? "Unknown Artist",
+                                    trailing:
+                                        contoller.playindex.value == index &&
+                                                contoller.isplaying.value
+                                            ? Icon(
+                                                Icons.play_arrow,
+                                                size: 26,
+                                                color: whiteColor,
+                                              )
+                                            : Icon(
+                                                Icons.circle,
+                                                size: 25,
+                                              )),
                               );
                             },
                             childCount: snapshot.data!.length,

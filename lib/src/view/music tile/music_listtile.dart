@@ -23,7 +23,7 @@ class MusicListtile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        tileColor: Colors.green,
+        tileColor: bgcolor,
         onTap: onPressed,
         leading: leading,
         title: Text(

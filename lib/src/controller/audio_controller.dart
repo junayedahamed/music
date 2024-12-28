@@ -6,8 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 class PlayerController extends GetxController {
   final audioQuery = OnAudioQuery();
   final player = AudioPlayer();
-  // var playindex = 0.obs;
-  // var isplaying = false.obs;
+  var playindex = 0.obs;
+  var isplaying = false.obs;
   // get plindex => _playindex;
   // get isplaying => _isplaying;
   @override
@@ -17,16 +17,27 @@ class PlayerController extends GetxController {
   }
 
   playaudio(String? uri, index) async {
-    // playindex = index;
+    playindex = RxInt(index);
     try {
       await player.setAudioSource(AudioSource.uri(
         Uri.parse(uri!),
       ));
       player.play();
-      // isplaying(true);
+      isplaying.value = true;
+      update();
     } on Exception catch (e) {
       print(e);
       // throw Exception(e);
+    }
+  }
+
+  pause() {
+    if (isplaying.value) {
+      player.pause();
+      isplaying.value = false;
+    } else {
+      player.play();
+      isplaying.value = true;
     }
   }
 
