@@ -8,13 +8,18 @@ import 'package:music/src/view/music%20tile/music_listtile.dart';
 import 'package:music/src/view/player%20view/player_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
-enum Customorder { atoz, ztoa }
+enum Customorder {
+  atoz,
+  ztoa,
+}
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
   final PlayerController contoller = Get.put(PlayerController());
   final SortSongByOrder sort = SortSongByOrder();
+  // static List<SongModel> songs = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,7 +35,9 @@ class HomePage extends StatelessWidget {
               // AppBar(
               actions: [
                 IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // showSearch(context: context, delegate: SearchSong());
+                    },
                     icon: Icon(
                       Icons.search,
                       color: whiteColor,
@@ -45,24 +52,41 @@ class HomePage extends StatelessWidget {
                     PopupMenuItem(
                       value: Customorder.atoz,
                       child: Text(
-                        "A-Z",
+                        " A to Z",
                         style: fontStyle(15, whiteColor),
                       ),
                     ),
                     PopupMenuItem(
                       value: Customorder.ztoa,
                       child: Text(
-                        "Z-A",
+                        "Z to A",
                         style: fontStyle(15, whiteColor),
                       ),
                     ),
+                    // PopupMenuItem(
+                    //   value: Customorder.name,
+                    //   child: Text(
+                    //     "name",
+                    //     style: fontStyle(15, whiteColor),
+                    //   ),
+                    // ),
+                    // PopupMenuItem(
+                    //   value: Customorder.title,
+                    //   child: Text(
+                    //     "title",
+                    //     style: fontStyle(15, whiteColor),
+                    //   ),
+                    // ),
+                    // PopupMenuItem(
+                    //   value: Customorder.duration,
+                    //   child: Text(
+                    //     "duration",
+                    //     style: fontStyle(15, whiteColor),
+                    //   ),
+                    // ),
                   ],
                   onSelected: (value) {
-                    if (value == Customorder.atoz) {
-                      sort.desc(value);
-                    } else {
-                      sort.asc(value);
-                    }
+                    sort.sortby(value);
                   },
                 )
               ],
@@ -102,6 +126,7 @@ class HomePage extends StatelessWidget {
                           ),
                         );
                       } else {
+                        // src.setvalue(snapshot.data);
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -126,15 +151,11 @@ class HomePage extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () {
-                                      // print(contoller.isplaying);
-                                      contoller.playaudio(
-                                        snapshot.data![index].uri,
-                                        index,
-                                      );
+                                      contoller.playaudio(song.uri, index);
                                       Get.to(Player(
-                                        musicName: song.title,
-                                        artistName:
-                                            song.artist ?? "Unknown Artist",
+                                        songs: snapshot.data!,
+
+                                        // song.artist ?? "Unknown Artist",
                                       ));
                                     },
                                     musicName: song.title.length > 35
@@ -152,6 +173,7 @@ class HomePage extends StatelessWidget {
                                             : Icon(
                                                 Icons.circle,
                                                 size: 25,
+                                                color: bgcolor,
                                               )),
                               );
                             },
