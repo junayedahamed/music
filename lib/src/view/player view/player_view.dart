@@ -182,9 +182,16 @@ class Player extends StatelessWidget {
                               color: whiteColor,
                             ),
                             onPressed: () {
-                              controller.playaudio(
-                                  songs[controller.playindex.value - 1].uri,
-                                  controller.playindex.value - 1);
+                              if (controller.playindex.value == 0) {
+                                controller.playaudio(
+                                  songs[songs.length - 1].uri,
+                                  songs.length - 1,
+                                );
+                              } else {
+                                controller.playaudio(
+                                    songs[controller.playindex.value - 1].uri,
+                                    controller.playindex.value - 1);
+                              }
                             },
                           ),
                           Obx(
@@ -212,9 +219,18 @@ class Player extends StatelessWidget {
                               color: whiteColor,
                             ),
                             onPressed: () {
-                              controller.playaudio(
+                              if (controller.playindex.value ==
+                                  songs.length - 1) {
+                                controller.playaudio(
+                                  songs[0].uri,
+                                  0,
+                                );
+                              } else {
+                                controller.playaudio(
                                   songs[controller.playindex.value + 1].uri,
-                                  controller.playindex.value + 1);
+                                  controller.playindex.value + 1,
+                                );
+                              }
                             },
                           ),
                         ],
