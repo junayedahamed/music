@@ -82,7 +82,7 @@ class Player extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(
-                                  height: 5,
+                                  height: 6,
                                 ),
                                 SizedBox(
                                   width: 250,
