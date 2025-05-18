@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
 import 'package:music/src/controller/audio_controller.dart';
+import 'package:music/src/view/home/bottom_muisic_view/bottom_music_view.dart';
 import 'package:music/src/view/home/sort_song_by_order.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
 import 'package:music/src/view/player%20view/player_view.dart';
@@ -17,11 +18,14 @@ class HomePage extends StatelessWidget {
   HomePage({super.key});
 
   final PlayerController contoller = Get.put(PlayerController());
+
   final SortSongByOrder sort = SortSongByOrder();
-  // static List<SongModel> songs = [];
+
+  final playercontroller = Get.find<PlayerController>();
 
   @override
   Widget build(BuildContext context) {
+    List<SongModel> songs = [];
     return Scaffold(
         backgroundColor: bgDarkcolor,
         // appBar:
@@ -30,7 +34,7 @@ class HomePage extends StatelessWidget {
           slivers: [
             SliverAppBar(
               backgroundColor: bgDarkcolor,
-              pinned: true,
+              pinned: false,
               expandedHeight: 50,
               // AppBar(
               actions: [
@@ -63,27 +67,6 @@ class HomePage extends StatelessWidget {
                         style: fontStyle(15, whiteColor),
                       ),
                     ),
-                    // PopupMenuItem(
-                    //   value: Customorder.name,
-                    //   child: Text(
-                    //     "name",
-                    //     style: fontStyle(15, whiteColor),
-                    //   ),
-                    // ),
-                    // PopupMenuItem(
-                    //   value: Customorder.title,
-                    //   child: Text(
-                    //     "title",
-                    //     style: fontStyle(15, whiteColor),
-                    //   ),
-                    // ),
-                    // PopupMenuItem(
-                    //   value: Customorder.duration,
-                    //   child: Text(
-                    //     "duration",
-                    //     style: fontStyle(15, whiteColor),
-                    //   ),
-                    // ),
                   ],
                   onSelected: (value) {
                     sort.sortby(value);
@@ -131,6 +114,7 @@ class HomePage extends StatelessWidget {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final song = snapshot.data![index];
+                              songs.add(song);
                               return Obx(
                                 () => MusicListtile(
                                     leading: QueryArtworkWidget(
@@ -151,12 +135,13 @@ class HomePage extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () {
-                                      contoller.playaudio(song.uri, index);
-                                      Get.to(Player(
-                                        songs: snapshot.data!,
+                                      contoller.playaudio(
+                                          song.uri, index, song.title);
+                                      Get.to(() => Player(
+                                            songs: snapshot.data!,
 
-                                        // song.artist ?? "Unknown Artist",
-                                      ));
+                                            // song.artist ?? "Unknown Artist",
+                                          ));
                                     },
                                     musicName: song.title.length > 35
                                         ? song.title.substring(0, 35)
@@ -195,6 +180,7 @@ class HomePage extends StatelessWidget {
             //       artistName: "artistName"),
             // )
           ],
-        ));
+        ),
+        bottomNavigationBar: BottomMusicView(songs: songs));
   }
 }

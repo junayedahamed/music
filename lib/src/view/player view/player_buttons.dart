@@ -11,9 +11,9 @@ class PlayerButtons extends StatelessWidget {
   final Widget myicon;
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: onPressed,
-      icon: myicon,
+    return GestureDetector(
+      onTap: onPressed,
+      child: myicon,
     );
   }
 }
