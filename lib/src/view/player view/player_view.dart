@@ -454,17 +454,7 @@ class Player extends StatelessWidget {
                                 PlayerButtons(
                                   myicon: Icon(Icons.skip_previous,
                                       size: 40, color: whiteColor),
-                                  onPressed: () {
-                                    int index = controller.playindex.value;
-                                    int newIndex = index == 0
-                                        ? songs.length - 1
-                                        : index - 1;
-                                    controller.playaudio(
-                                      songs[newIndex].uri,
-                                      newIndex,
-                                      songs[newIndex].title,
-                                    );
-                                  },
+                                  onPressed: controller.playprevious,
                                 ),
                                 const SizedBox(width: 35),
                                 Obx(() => PlayerButtons(
@@ -479,17 +469,7 @@ class Player extends StatelessWidget {
                                 PlayerButtons(
                                   myicon: Icon(Icons.skip_next,
                                       size: 40, color: whiteColor),
-                                  onPressed: () {
-                                    int index = controller.playindex.value;
-                                    int newIndex = index == songs.length - 1
-                                        ? 0
-                                        : index + 1;
-                                    controller.playaudio(
-                                      songs[newIndex].uri,
-                                      newIndex,
-                                      songs[newIndex].title,
-                                    );
-                                  },
+                                  onPressed: controller.playnext,
                                 ),
                               ],
                             )

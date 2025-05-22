@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:music/src/view/home/home_view.dart';
@@ -57,10 +58,16 @@ class PlayerController extends GetxController {
   playaudio(String? uri, index, String title) async {
     log(playindex.value.toString() + _allSong.length.toString());
     try {
-      await player.setAudioSource(AudioSource.uri(
-        Uri.parse(uri!),
-      ));
-      songname.value = title;
+      final mediaitem = MediaItem(
+        id: uri!,
+        title: title,
+      );
+      final audioSource = AudioSource.uri(
+        Uri.parse(mediaitem.id),
+        tag: mediaitem,
+      );
+      await player.setAudioSource(audioSource);
+      songname.value = mediaitem.title;
       playindex.value = index;
       player.play();
       isplaying.value = true;
@@ -83,20 +90,6 @@ class PlayerController extends GetxController {
       isplaying.value = true;
     }
   }
-
-  // checkPermission() async {
-  //   var permission = await Permission.storage.request();
-  //   if (permission.isGranted) {
-  //     // allSong = await audioQuery.querySongs(
-  //     //   ignoreCase: true,
-  //     //   orderType: sort.order,
-  //     //   sortType: null,
-  //     //   uriType: UriType.EXTERNAL,
-  //     // );
-  //   } else {
-  //     checkPermission();
-  //   }
-  // }
 
   Future<void> checkAndRequestPermission() async {
     // Android 13+ (API 33+)
@@ -124,6 +117,24 @@ class PlayerController extends GetxController {
     } else {
       // setState(() => _status = "Permission denied ❌");
       checkAndRequestPermission();
+    }
+  }
+
+  void playnext() {
+    if (playindex.value < _allSong.length) {
+      playaudio(_allSong[playindex.value + 1].uri, playindex.value + 1,
+          _allSong[playindex.value + 1].title);
+    } else {
+      return;
+    }
+  }
+
+  void playprevious() {
+    if (playindex.value > 0) {
+      playaudio(_allSong[playindex.value - 1].uri, playindex.value - 1,
+          _allSong[playindex.value - 1].title);
+    } else {
+      return;
     }
   }
 
