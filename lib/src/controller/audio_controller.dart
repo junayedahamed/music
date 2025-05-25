@@ -96,6 +96,7 @@ class PlayerController extends GetxController {
     if (await Permission.audio.isDenied ||
         await Permission.audio.isPermanentlyDenied) {
       await Permission.audio.request();
+      // return false;
     }
 
     // Also check for storage permission for older Android versions
@@ -114,9 +115,12 @@ class PlayerController extends GetxController {
       );
       loading.value = false;
       // setState(() => _status = "Permission granted ✅");
+
+      // return true;
     } else {
       // setState(() => _status = "Permission denied ❌");
       checkAndRequestPermission();
+      // return false;
     }
   }
 

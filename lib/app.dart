@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:music/src/view/home/home_view.dart';
+import 'package:music/src/view/welcome_splash_screen/splash_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -18,8 +19,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.system,
-      home: HomePage(),
+      themeMode: ThemeMode.dark,
+      home: SplashScreenMusic(),
     );
   }
 }
