@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Juna_play',
+      darkTheme: ThemeData.dark(),
       theme: ThemeData(
         fontFamily: "Regular",
         appBarTheme: AppBarTheme(

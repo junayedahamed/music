@@ -4,6 +4,7 @@ import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/view/home/bottom_muisic_view/bottom_music_view.dart';
+import 'package:music/src/view/home/search_song.dart';
 import 'package:music/src/view/home/sort_song_by_order.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
 import 'package:music/src/view/player%20view/player_view.dart';
@@ -289,7 +290,9 @@ class HomePage extends StatelessWidget {
               actions: [
                 IconButton(
                   onPressed: () {
-                    // showSearch(context: context, delegate: SearchSong());
+                    showSearch(
+                        context: context,
+                        delegate: SearchSong(contoller.allsongs));
                   },
                   icon: Icon(Icons.search, color: whiteColor),
                 ),
@@ -343,37 +346,35 @@ class HomePage extends StatelessWidget {
                     final song = contoller.allsongs[index];
                     songs.add(song);
 
-                    return MusicListtile(
-                        leading: QueryArtworkWidget(
-                          id: song.id,
-                          type: ArtworkType.AUDIO,
-                          nullArtworkWidget: Container(
-                            height: 45,
-                            width: 45,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
+                    return Obx(
+                      () => MusicListtile(
+                          leading: QueryArtworkWidget(
+                            id: song.id,
+                            type: ArtworkType.AUDIO,
+                            nullArtworkWidget: Container(
+                              height: 45,
+                              width: 45,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.music_note,
+                                  color: whiteColor, size: 30),
                             ),
-                            child: Icon(Icons.music_note,
-                                color: whiteColor, size: 30),
                           ),
-                        ),
-                        onPressed: () {
-                          contoller.playaudio(song.uri, index, song.title);
-                          Get.to(() => Player(songs: contoller.allsongs));
-                        },
-                        musicName: song.title.length > 35
-                            ? song.title.substring(0, 35)
-                            : song.title,
-                        artistName: song.artist ?? "Unknown Artist",
-                        trailing: Obx(
-                          () {
-                            return contoller.playindex.value == index
-                                ? Icon(Icons.play_arrow,
-                                    size: 26, color: whiteColor)
-                                : Icon(Icons.circle, size: 25, color: bgcolor);
+                          onPressed: () {
+                            contoller.playaudio(song.uri, index, song.title);
+                            Get.to(() => Player(songs: contoller.allsongs));
                           },
-                        ));
+                          musicName: song.title.length > 35
+                              ? song.title.substring(0, 35)
+                              : song.title,
+                          artistName: song.artist ?? "Unknown Artist",
+                          trailing: contoller.playindex.value == index
+                              ? Icon(Icons.play_arrow,
+                                  size: 26, color: whiteColor)
+                              : Icon(Icons.circle, size: 25, color: bgcolor)),
+                    );
                   },
                   childCount: contoller.allsongs.length,
                 ),

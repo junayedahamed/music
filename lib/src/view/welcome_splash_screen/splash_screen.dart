@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/view/home/home_view.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreenMusic extends StatefulWidget {
   const SplashScreenMusic({super.key});
@@ -15,17 +16,27 @@ class _SplashScreenMusicState extends State<SplashScreenMusic> {
 
   @override
   void initState() {
-    _controller.checkAndRequestPermission().then((onValue) {
-      _navigate();
-    });
+    super.initState();
+    _permission();
+  }
+
+  _permission() async {
+    if (await Permission.audio.isDenied ||
+        await Permission.audio.isPermanentlyDenied) {
+      _controller.checkAndRequestPermission().then((onValue) {
+        _navigate();
+      });
+    }
     // status.then((onValue) {
     //   log(onValue.toString());
     // });
-    super.initState();
+    else {
+      _navigate();
+    }
   }
 
   void _navigate() async {
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(Duration(seconds: 1));
     if (mounted) {
       Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => HomePage(),
