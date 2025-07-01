@@ -7,13 +7,13 @@ import 'package:music/src/colors/colors.dart';
 import 'package:music/src/colors/styled_text.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/view/home/bottom_muisic_view/bottom_music_view.dart';
-import 'package:music/src/view/home/pop_dialogue/pop_dialogue.dart';
 import 'package:music/src/view/home/search_song.dart';
 import 'package:music/src/view/home/sort_song_by_order.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
 import 'package:music/src/view/player%20view/player_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
+//this is a enum for sort by technique
 enum Customorder {
   atoz,
   ztoa,
