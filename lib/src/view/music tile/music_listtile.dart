@@ -1,5 +1,5 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/controller/theme_controller.dart';
 
@@ -15,6 +15,12 @@ class MusicListtile extends StatelessWidget {
     this.songId,
     this.isCurrentSong,
     this.isPlaying,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onLongPress,
+    this.onMenuShare,
+    this.onMenuDelete,
+    this.onMenuSelect,
   });
 
   final String musicName;
@@ -26,6 +32,12 @@ class MusicListtile extends StatelessWidget {
   final int? songId;
   final bool? isCurrentSong;
   final bool? isPlaying;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onMenuShare;
+  final VoidCallback? onMenuDelete;
+  final VoidCallback? onMenuSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +57,7 @@ class MusicListtile extends StatelessWidget {
                 (songId != null &&
                     playerController.currentSongId.value == songId));
 
-        // Different text colors for current playing/active song vs other songs
+        // Highlight text color for current playing/active song
         final titleColor =
             isCurrent ? accentBlue : themeController.textPrimary;
         final subtitleColor = isCurrent
@@ -56,18 +68,21 @@ class MusicListtile extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(
-              color: isCurrent
-                  ? accentBlue.withValues(alpha: 0.45)
-                  : themeController.borderColor,
-              width: isCurrent ? 1.2 : 0.8,
+              color: isSelected
+                  ? accentBlue
+                  : (isCurrent
+                      ? accentBlue.withValues(alpha: 0.45)
+                      : themeController.borderColor),
+              width: (isSelected || isCurrent) ? 1.4 : 0.8,
             ),
           ),
-          tileColor: isCurrent
-              ? (isDark
-                  ? accentBlue.withValues(alpha: 0.08)
-                  : accentBlue.withValues(alpha: 0.06))
-              : cardBg,
+          tileColor: isSelected
+              ? accentBlue.withValues(alpha: isDark ? 0.16 : 0.12)
+              : (isCurrent
+                  ? accentBlue.withValues(alpha: isDark ? 0.08 : 0.06)
+                  : cardBg),
           onTap: onPressed,
+          onLongPress: onLongPress,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           leading: leading,
@@ -91,9 +106,113 @@ class MusicListtile extends StatelessWidget {
               fontWeight: isCurrent ? FontWeight.w500 : FontWeight.normal,
             ),
           ),
-          trailing: trailing,
+          trailing: _buildTrailing(context, themeController),
         );
       }),
+    );
+  }
+
+  Widget _buildTrailing(BuildContext context, ThemeController themeController) {
+    final accentBlue = themeController.accentBlue;
+
+    if (isSelectionMode) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? accentBlue : Colors.transparent,
+          border: Border.all(
+            color: isSelected
+                ? accentBlue
+                : themeController.textSecondary.withValues(alpha: 0.5),
+            width: 2.0,
+          ),
+        ),
+        child: isSelected
+            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+            : null,
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (trailing != null) trailing!,
+        if (onMenuShare != null || onMenuDelete != null || onMenuSelect != null)
+          Theme(
+            data: Theme.of(context).copyWith(
+              cardColor: themeController.cardBg,
+            ),
+            child: PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert_rounded,
+                color: themeController.textSecondary,
+                size: 20,
+              ),
+              color: themeController.cardBg,
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: themeController.borderColor),
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 170),
+              onSelected: (val) {
+                if (val == "share") onMenuShare?.call();
+                if (val == "select") onMenuSelect?.call();
+                if (val == "delete") onMenuDelete?.call();
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: "share",
+                  child: Row(
+                    children: [
+                      Icon(Icons.share_rounded,
+                          size: 18, color: themeController.textPrimary),
+                      const SizedBox(width: 12),
+                      Text("Share",
+                          style: TextStyle(
+                              color: themeController.textPrimary,
+                              fontSize: 13.5)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: "select",
+                  child: Row(
+                    children: [
+                      Icon(Icons.checklist_rounded,
+                          size: 18, color: themeController.textPrimary),
+                      const SizedBox(width: 12),
+                      Text("Select",
+                          style: TextStyle(
+                              color: themeController.textPrimary,
+                              fontSize: 13.5)),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(height: 1),
+                PopupMenuItem(
+                  value: "delete",
+                  child: Row(
+                    children: const [
+                      Icon(Icons.delete_forever_rounded,
+                          size: 18, color: Colors.redAccent),
+                      SizedBox(width: 12),
+                      Text("Delete from Device",
+                          style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

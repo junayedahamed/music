@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
@@ -670,6 +672,84 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     } else {
       sortLexicographically(ascending: true);
     }
+  }
+
+  Future<bool> shareSongs(List<SongModel> songs) async {
+    if (songs.isEmpty) return false;
+    try {
+      const platform = MethodChannel("com.example.music/headphone");
+      final paths = songs.map((s) => s.data).where((p) => p.isNotEmpty).toList();
+      final titles = songs.map((s) => s.title).toList();
+      final result = await platform.invokeMethod<bool>("shareSongs", {
+        "paths": paths,
+        "titles": titles,
+      });
+      return result ?? false;
+    } catch (e) {
+      log("Error sharing songs: $e");
+      return false;
+    }
+  }
+
+  Future<int> deleteSongs(List<SongModel> songs) async {
+    if (songs.isEmpty) return 0;
+    int deleted = 0;
+    try {
+      // 1. Physically delete files from filesystem
+      for (final s in songs) {
+        try {
+          if (s.data.isNotEmpty) {
+            final f = File(s.data);
+            if (await f.exists()) {
+              await f.delete();
+              deleted++;
+            }
+          }
+        } catch (e) {
+          log("Error deleting file ${s.data}: $e");
+        }
+      }
+
+      // 2. Clean up Android MediaStore via native platform channel
+      const platform = MethodChannel("com.example.music/headphone");
+      final paths = songs.map((s) => s.data).where((p) => p.isNotEmpty).toList();
+      final uris = songs.map((s) => s.uri ?? "").where((u) => u.isNotEmpty).toList();
+      await platform.invokeMethod("deleteSongs", {
+        "paths": paths,
+        "uris": uris,
+      });
+
+      // 3. Stop or advance playback if current song was deleted
+      final deletedIds = songs.map((s) => s.id).toSet();
+      final wasCurrentPlaying = songUri != null &&
+          songs.any((s) => s.uri == songUri || s.id == currentSongId.value);
+
+      if (wasCurrentPlaying) {
+        if (_allSong.length > songs.length) {
+          playnext();
+        } else {
+          await player.stop();
+          isplaying.value = false;
+          songUri = null;
+          songname.value = "Please select a song to play";
+          artistName.value = "Unknown Artist";
+          currentSongId.value = 0;
+        }
+      }
+
+      // 4. Update in-memory lists & persisted session
+      _allSong.removeWhere((s) => deletedIds.contains(s.id));
+      currentPlaylist.removeWhere((s) => deletedIds.contains(s.id));
+      playedSessionSongs.removeWhere(
+          (m) => deletedIds.contains((m['id'] as num?)?.toInt()));
+
+      _saveCache();
+      _saveSessionHistory();
+      update();
+    } catch (e) {
+      log("Error deleting songs: $e");
+    }
+    return deleted > 0 ? deleted : songs.length;
   }
 
   List<SongModel> get allsongs => _allSong;

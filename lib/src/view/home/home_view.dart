@@ -66,6 +66,158 @@ class _HomePageState extends State<HomePage> {
   bool _isDraggingScrollbar = false;
   bool _showCenterPreview = false;
 
+  final Set<int> _selectedSongIds = <int>{};
+  bool get _isSelectionMode => _selectedSongIds.isNotEmpty;
+
+  void _toggleSelectSong(SongModel song) {
+    setState(() {
+      if (_selectedSongIds.contains(song.id)) {
+        _selectedSongIds.remove(song.id);
+      } else {
+        _selectedSongIds.add(song.id);
+      }
+    });
+  }
+
+  void _shareSelectedSongs() {
+    final toShare = contoller.allsongs
+        .where((s) => _selectedSongIds.contains(s.id))
+        .toList();
+    if (toShare.isEmpty) return;
+    HapticFeedback.lightImpact();
+    contoller.shareSongs(toShare);
+  }
+
+  void _confirmDeleteSong(SongModel song) {
+    _showDeleteWarningDialog(
+      title: "Delete Song?",
+      message:
+          "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
+      songsToDelete: [song],
+    );
+  }
+
+  void _confirmDeleteSelectedSongs() {
+    final toDelete = contoller.allsongs
+        .where((s) => _selectedSongIds.contains(s.id))
+        .toList();
+    if (toDelete.isEmpty) return;
+
+    _showDeleteWarningDialog(
+      title: "Delete ${toDelete.length} Songs?",
+      message:
+          "Are you sure you want to permanently delete ${toDelete.length} selected song(s) from your device's memory? These files will be completely erased and cannot be recovered.",
+      songsToDelete: toDelete,
+    );
+  }
+
+  void _showDeleteWarningDialog({
+    required String title,
+    required String message,
+    required List<SongModel> songsToDelete,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final themeController = Get.find<ThemeController>();
+        final cardBg = themeController.cardBg;
+        final textPrimary = themeController.textPrimary;
+        final textSecondary = themeController.textSecondary;
+        final borderColor = themeController.borderColor;
+
+        return AlertDialog(
+          backgroundColor: cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: borderColor),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.redAccent,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.acme(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 13.5,
+              color: textSecondary,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.delete_forever_rounded, size: 18),
+              label: const Text(
+                "Delete Permanently",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final count = await contoller.deleteSongs(songsToDelete);
+                if (mounted) {
+                  setState(() {
+                    _selectedSongIds.removeAll(songsToDelete.map((s) => s.id));
+                  });
+                  Get.rawSnackbar(
+                    message: "Permanently deleted $count song(s) from device",
+                    duration: const Duration(seconds: 3),
+                    backgroundColor: const Color(0xff1f212c),
+                    icon: const Icon(Icons.check_circle_outline_rounded,
+                        color: Colors.redAccent),
+                    margin: const EdgeInsets.all(12),
+                    borderRadius: 12,
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -167,8 +319,9 @@ class _HomePageState extends State<HomePage> {
       final textSecondary = themeController.textSecondary;
       final accentGreen = themeController.accentGreen;
       final accentBlue = themeController.accentBlue;
-      final inactiveAlphabetColor =
-          isDark ? Colors.white.withValues(alpha: 0.75) : const Color(0xff475569);
+      final inactiveAlphabetColor = isDark
+          ? Colors.white.withValues(alpha: 0.75)
+          : const Color(0xff475569);
 
       return PopScope(
         canPop: false,
@@ -176,6 +329,14 @@ class _HomePageState extends State<HomePage> {
           log('didPop: $didPop');
 
           if (didPop) return;
+
+          // If in multi-selection mode, pressing back cancels selection
+          if (_isSelectionMode) {
+            setState(() {
+              _selectedSongIds.clear();
+            });
+            return;
+          }
 
           final shouldExit = await showDialog<bool>(
             context: context,
@@ -245,33 +406,85 @@ class _HomePageState extends State<HomePage> {
                         floating: true,
                         automaticallyImplyLeading: false,
                         elevation: 0,
-                        centerTitle: true,
-                        leading: Builder(
-                          builder: (context) => IconButton(
-                            icon: Icon(Icons.menu_rounded,
-                                color: textPrimary, size: 26),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
-                          ),
-                        ),
+                        centerTitle: false,
+                        leading: _isSelectionMode
+                            ? IconButton(
+                                icon: Icon(Icons.close_rounded,
+                                    color: textPrimary, size: 24),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedSongIds.clear();
+                                  });
+                                },
+                              )
+                            : Builder(
+                                builder: (context) => IconButton(
+                                  icon: Icon(Icons.menu_rounded,
+                                      color: textPrimary, size: 26),
+                                  onPressed: () =>
+                                      Scaffold.of(context).openDrawer(),
+                                ),
+                              ),
                         title: Text(
-                          "Music Player",
+                          _isSelectionMode
+                              ? "${_selectedSongIds.length} Selected"
+                              : "Music Player",
                           style: GoogleFonts.acme(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: accentGreen,
+                            color: _isSelectionMode ? accentBlue : accentGreen,
                             letterSpacing: 0.5,
                           ),
                         ),
                         actions: [
-                          IconButton(
-                            onPressed: () {
-                              showSearch(
-                                context: context,
-                                delegate: SearchSong(contoller.allsongs),
-                              );
-                            },
-                            icon: Icon(Icons.search, color: textPrimary),
-                          ),
+                          if (_isSelectionMode) ...[
+                            IconButton(
+                              tooltip: _selectedSongIds.length ==
+                                      contoller.allsongs.length
+                                  ? "Deselect All"
+                                  : "Select All",
+                              icon: Icon(
+                                _selectedSongIds.length ==
+                                        contoller.allsongs.length
+                                    ? Icons.deselect_rounded
+                                    : Icons.select_all_rounded,
+                                color: textPrimary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  if (_selectedSongIds.length ==
+                                      contoller.allsongs.length) {
+                                    _selectedSongIds.clear();
+                                  } else {
+                                    _selectedSongIds.addAll(
+                                        contoller.allsongs.map((s) => s.id));
+                                  }
+                                });
+                              },
+                            ),
+                            IconButton(
+                              tooltip: "Share Selected",
+                              icon:
+                                  Icon(Icons.share_rounded, color: accentBlue),
+                              onPressed: _shareSelectedSongs,
+                            ),
+                            IconButton(
+                              tooltip: "Delete Selected",
+                              icon: const Icon(Icons.delete_forever_rounded,
+                                  color: Colors.redAccent),
+                              onPressed: _confirmDeleteSelectedSongs,
+                            ),
+                          ] else ...[
+                            IconButton(
+                              onPressed: () {
+                                showSearch(
+                                  context: context,
+                                  delegate: SearchSong(contoller.allsongs),
+                                );
+                              },
+                              icon: Icon(Icons.search, color: textPrimary),
+                            ),
+                          ],
                         ],
                       ),
                       SliverList(
@@ -280,11 +493,16 @@ class _HomePageState extends State<HomePage> {
                             final song = contoller.allsongs[index];
                             songs.add(song);
 
+                            final isSelected =
+                                _selectedSongIds.contains(song.id);
+
                             return Obx(
                               () => MusicListtile(
                                 songUri: song.uri,
                                 songId: song.id,
                                 isCurrentSong: contoller.songUri == song.uri,
+                                isSelectionMode: _isSelectionMode,
+                                isSelected: isSelected,
                                 leading: QueryArtworkWidget(
                                   id: song.id,
                                   type: ArtworkType.AUDIO,
@@ -305,15 +523,30 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  contoller.playOrNavigate(
-                                    song,
-                                    index,
-                                    contoller.allsongs,
-                                  );
+                                  if (_isSelectionMode) {
+                                    _toggleSelectSong(song);
+                                  } else {
+                                    contoller.playOrNavigate(
+                                      song,
+                                      index,
+                                      contoller.allsongs,
+                                    );
+                                  }
                                 },
+                                onLongPress: () {
+                                  _toggleSelectSong(song);
+                                },
+                                onMenuShare: () => contoller.shareSongs([song]),
+                                onMenuSelect: () {
+                                  setState(() {
+                                    _selectedSongIds.add(song.id);
+                                  });
+                                },
+                                onMenuDelete: () => _confirmDeleteSong(song),
                                 musicName: song.title,
                                 artistName: song.artist ?? "Unknown Artist",
-                                trailing: contoller.songUri == song.uri &&
+                                trailing: !_isSelectionMode &&
+                                        contoller.songUri == song.uri &&
                                         contoller.isplaying.value
                                     ? Icon(
                                         Icons.play_arrow_rounded,

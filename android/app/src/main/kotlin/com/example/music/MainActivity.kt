@@ -6,13 +6,17 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.media.MediaScannerConnection
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
+import android.net.Uri
 import android.os.Build
+import androidx.core.content.FileProvider
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 
 class MainActivity: AudioServiceActivity() {
     private val METHOD_CHANNEL = "com.example.music/headphone"
@@ -40,6 +44,18 @@ class MainActivity: AudioServiceActivity() {
                     val strength = call.argument<Int>("strength") ?: 0
                     val success = applyBassBoost(strength)
                     result.success(success)
+                }
+                "shareSongs" -> {
+                    val paths = call.argument<List<String>>("paths") ?: listOf()
+                    val titles = call.argument<List<String>>("titles") ?: listOf()
+                    val success = shareAudioFiles(paths, titles)
+                    result.success(success)
+                }
+                "deleteSongs" -> {
+                    val paths = call.argument<List<String>>("paths") ?: listOf()
+                    val uris = call.argument<List<String>>("uris") ?: listOf()
+                    val deletedCount = deleteMediaSongs(paths, uris)
+                    result.success(deletedCount)
                 }
                 else -> result.notImplemented()
             }
@@ -273,6 +289,90 @@ class MainActivity: AudioServiceActivity() {
         } catch (_: Exception) {
             false
         }
+    }
+
+    private fun shareAudioFiles(paths: List<String>, titles: List<String>): Boolean {
+        if (paths.isEmpty()) return false
+        return try {
+            val uris = ArrayList<Uri>()
+            for (path in paths) {
+                val file = File(path)
+                if (file.exists()) {
+                    val uri: Uri = try {
+                        FileProvider.getUriForFile(
+                            this,
+                            "${applicationContext.packageName}.fileprovider",
+                            file
+                        )
+                    } catch (e: Exception) {
+                        Uri.fromFile(file)
+                    }
+                    uris.add(uri)
+                }
+            }
+
+            if (uris.isEmpty()) return false
+
+            val intent = if (uris.size == 1) {
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "audio/*"
+                    putExtra(Intent.EXTRA_STREAM, uris[0])
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    if (titles.isNotEmpty()) {
+                        putExtra(Intent.EXTRA_SUBJECT, titles[0])
+                    }
+                }
+            } else {
+                Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                    type = "audio/*"
+                    putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }
+
+            val chooser = Intent.createChooser(intent, "Share audio via")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(chooser)
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error sharing audio: ${e.message}")
+            false
+        }
+    }
+
+    private fun deleteMediaSongs(paths: List<String>, uris: List<String>): Int {
+        var count = 0
+        try {
+            for (path in paths) {
+                try {
+                    val file = File(path)
+                    if (file.exists() && file.delete()) {
+                        count++
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Error deleting file $path: ${e.message}")
+                }
+            }
+            for (uriStr in uris) {
+                try {
+                    val uri = Uri.parse(uriStr)
+                    contentResolver.delete(uri, null, null)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Error deleting from MediaStore $uriStr: ${e.message}")
+                }
+            }
+            if (paths.isNotEmpty()) {
+                MediaScannerConnection.scanFile(
+                    this,
+                    paths.toTypedArray(),
+                    null,
+                    null
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error in deleteMediaSongs: ${e.message}")
+        }
+        return count
     }
 
     override fun onDestroy() {

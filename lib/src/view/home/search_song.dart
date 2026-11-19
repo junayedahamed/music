@@ -11,6 +11,87 @@ class SearchSong extends SearchDelegate {
 
   final controller = Get.find<PlayerController>();
 
+  void _confirmDeleteSong(BuildContext context, SongModel song) {
+    final themeController = Get.find<ThemeController>();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: themeController.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: themeController.borderColor),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.redAccent,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Delete Song?",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: themeController.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
+            style: TextStyle(
+              fontSize: 13.5,
+              color: themeController.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: themeController.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.delete_forever_rounded, size: 18),
+              label: const Text(
+                "Delete Permanently",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await controller.deleteSongs([song]);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   ThemeData appBarTheme(BuildContext context) {
     final themeController = Get.put(ThemeController());
@@ -116,6 +197,8 @@ class SearchSong extends SearchDelegate {
             },
             musicName: song.title,
             artistName: song.artist ?? "Unknown Artist",
+            onMenuShare: () => controller.shareSongs([song]),
+            onMenuDelete: () => _confirmDeleteSong(context, song),
             trailing: isPlaying
                 ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
                 : null,
@@ -171,6 +254,8 @@ class SearchSong extends SearchDelegate {
             },
             musicName: song.title,
             artistName: song.artist ?? "Unknown Artist",
+            onMenuShare: () => controller.shareSongs([song]),
+            onMenuDelete: () => _confirmDeleteSong(context, song),
             trailing: isPlaying
                 ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
                 : null,
