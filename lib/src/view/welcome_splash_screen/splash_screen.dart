@@ -54,22 +54,26 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
   }
 
   Future<void> _permission() async {
-    if (await Permission.audio.isDenied ||
-        await Permission.audio.isPermanentlyDenied) {
-      _controller.checkAndRequestPermission().then((_) {
+    try {
+      final audioGranted = await Permission.audio.isGranted;
+      final storageGranted = await Permission.storage.isGranted;
+      if (audioGranted || storageGranted) {
         _navigate();
-      });
-    } else {
-      _navigate();
-    }
+        return;
+      }
+    } catch (_) {}
+
+    await _controller.checkAndRequestPermission();
+    _navigate();
   }
 
   void _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 1600));
+    // Snappy, professional splash delay (300ms instead of 1600ms)
+    await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
+          transitionDuration: const Duration(milliseconds: 250),
           pageBuilder: (context, animation, secondaryAnimation) =>
               const HomePage(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>

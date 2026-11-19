@@ -55,6 +55,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     musicCacheBox = Hive.box<Map>("music");
     _initAudioListeners();
     _loadSessionHistory();
+    _loadCachedSongs();
 
     final alldata =
         musicCacheBox.get("last_session") ?? musicCacheBox.get("data");
@@ -81,7 +82,37 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       isplaying.value = false;
     }
 
+    if (_allSong.isNotEmpty) {
+      _restoreAudioSession();
+    }
+
     checkAndRequestPermission();
+  }
+
+  void _loadCachedSongs() {
+    try {
+      final cached = musicCacheBox.get("cached_song_list");
+      if (cached != null && cached["songs"] is List) {
+        final list = cached["songs"] as List;
+        final loaded = list
+            .whereType<Map>()
+            .map((e) => SongModel(Map<dynamic, dynamic>.from(e)))
+            .toList();
+        if (loaded.isNotEmpty) {
+          _allSong = loaded;
+          sortLexicographically(ascending: true);
+          loading.value = false;
+          update();
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _saveCachedSongs(List<SongModel> songs) async {
+    try {
+      final list = songs.map((s) => s.getMap).toList();
+      await musicCacheBox.put("cached_song_list", {"songs": list});
+    } catch (_) {}
   }
 
   @override
@@ -443,31 +474,43 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> checkAndRequestPermission() async {
-    if (await Permission.audio.isDenied ||
-        await Permission.audio.isPermanentlyDenied) {
-      await Permission.audio.request();
+    bool hasPermission = false;
+    try {
+      final audioGranted = await Permission.audio.isGranted;
+      final storageGranted = await Permission.storage.isGranted;
+      hasPermission = audioGranted || storageGranted;
+
+      if (!hasPermission) {
+        final audioStatus = await Permission.audio.request();
+        if (audioStatus.isGranted) {
+          hasPermission = true;
+        } else {
+          final storageStatus = await Permission.storage.request();
+          hasPermission = storageStatus.isGranted;
+        }
+      }
+    } catch (_) {
+      hasPermission = true;
     }
 
-    await [
-      Permission.storage,
-      Permission.mediaLibrary,
-    ].request();
-
-    if (await Permission.storage.isGranted ||
-        await Permission.audio.isGranted) {
-      _allSong = await audioQuery.querySongs(
+    if (hasPermission) {
+      final freshSongs = await audioQuery.querySongs(
         ignoreCase: true,
         orderType: sort.order,
         sortType: null,
         uriType: UriType.EXTERNAL,
       );
+
+      _allSong = freshSongs;
       sortLexicographically(ascending: true);
       loading.value = false;
+      _saveCachedSongs(freshSongs);
+      update();
 
-      // Restore session queue and audio player prepared to resume
-      await _restoreAudioSession();
+      // Lazy background session restore (does not block UI or navigation)
+      _restoreAudioSession();
     } else {
-      checkAndRequestPermission();
+      loading.value = false;
     }
   }
 
@@ -745,6 +788,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
       _saveCache();
       _saveSessionHistory();
+      _saveCachedSongs(_allSong);
       update();
     } catch (e) {
       log("Error deleting songs: $e");
