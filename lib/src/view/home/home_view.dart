@@ -1,745 +1,663 @@
 import 'dart:developer';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:music/src/colors/colors.dart';
-import 'package:music/src/colors/styled_text.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
 import 'package:music/src/controller/audio_controller.dart';
+import 'package:music/src/controller/theme_controller.dart';
+import 'package:music/src/view/home/alphabet_scrollbar.dart';
 import 'package:music/src/view/home/bottom_muisic_view/bottom_music_view.dart';
+import 'package:music/src/view/home/drawer/app_drawer.dart';
 import 'package:music/src/view/home/search_song.dart';
-import 'package:music/src/view/home/sort_song_by_order.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
-import 'package:music/src/view/player%20view/player_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
-//this is a enum for sort by technique
+// Enum for sort by order
 enum Customorder {
   atoz,
   ztoa,
 }
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
-  final PlayerController contoller = Get.put(PlayerController());
-
-  final SortSongByOrder sort = SortSongByOrder();
-
-  final playercontroller = Get.find<PlayerController>();
-
-  // @override
   @override
-  Widget build(BuildContext context) {
-    List<SongModel> songs = [];
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        log('didPop: $didPop');
-
-        if (didPop) return;
-
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Exit App?'),
-            content: Text('Do you really want to exit?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: Text('Exit'),
-              ),
-            ],
-          ),
-        );
-
-        if (shouldExit == true) {
-          SystemNavigator.pop(); // Allow actual pop
-        }
-      },
-      child: Scaffold(
-        backgroundColor: bgDarkcolor,
-        // appBar: AppBar(
-        //   backgroundColor: bgDarkcolor,
-        //   // pinned: false,
-        //   // expandedHeight: 50,
-        //   // AppBar(
-        //   actions: [
-        //     IconButton(
-        //         onPressed: () {
-        //           // showSearch(context: context, delegate: SearchSong());
-        //         },
-        //         icon: Icon(
-        //           Icons.search,
-        //           color: whiteColor,
-        //         )),
-        //     PopupMenuButton(
-        //       color: Colors.black,
-        //       icon: Icon(
-        //         Icons.sort,
-        //         color: whiteColor,
-        //       ),
-        //       itemBuilder: (context) => [
-        //         PopupMenuItem(
-        //           value: Customorder.atoz,
-        //           child: Text(
-        //             " A to Z",
-        //             style: fontStyle(15, whiteColor),
-        //           ),
-        //         ),
-        //         PopupMenuItem(
-        //           value: Customorder.ztoa,
-        //           child: Text(
-        //             "Z to A",
-        //             style: fontStyle(15, whiteColor),
-        //           ),
-        //         ),
-        //       ],
-        //       onSelected: (value) {
-        //         sort.sortby(value);
-        //       },
-        //     )
-        //   ],
-        //   centerTitle: true,
-        //   title: Text(
-        //     "Music Player",
-        //     style: fontStyle(20, Colors.green),
-        //   ),
-        // ),
-        // body: Obx(() {
-        //   if (contoller.loading.value) {
-        //     return const Center(child: CircularProgressIndicator());
-        //   }
-
-        //   if (contoller.allsongs.isEmpty && !contoller.loading.value) {
-        //     return Center(
-        //       child: Text(
-        //         "No song found",
-        //         style: fontStyle(14, whiteColor),
-        //       ),
-        //     );
-        //   }
-
-        //   return ListenableBuilder(
-        //       listenable: sort,
-        //       builder: (context, snapshot) {
-        //         return ListView.builder(
-        //           physics: BouncingScrollPhysics(),
-        //           itemCount: contoller.allsongs.length,
-        //           itemBuilder: (context, index) {
-        //             final song = contoller.allsongs[index];
-        //             songs.add(song);
-        //             return MusicListtile(
-        //               leading: QueryArtworkWidget(
-        //                 id: song.id,
-        //                 type: ArtworkType.AUDIO,
-        //                 nullArtworkWidget: Container(
-        //                   height: 45,
-        //                   width: 45,
-        //                   decoration: BoxDecoration(
-        //                     color: Colors.black,
-        //                     shape: BoxShape.circle,
-        //                   ),
-        //                   child: Icon(
-        //                     Icons.music_note,
-        //                     color: whiteColor,
-        //                     size: 30,
-        //                   ),
-        //                 ),
-        //               ),
-        //               onPressed: () {
-        //                 contoller.playaudio(song.uri, index, song.title);
-        //                 Get.to(() => Player(songs: contoller.allsongs));
-        //               },
-        //               musicName: song.title.length > 35
-        //                   ? song.title.substring(0, 35)
-        //                   : song.title,
-        //               artistName: song.artist ?? "Unknown Artist",
-        //               trailing: contoller.playindex.value == index &&
-        //                       contoller.isplaying.value
-        //                   ? Icon(Icons.play_arrow, size: 26, color: whiteColor)
-        //                   : Icon(Icons.circle, size: 25, color: bgcolor),
-        //             );
-        //           },
-        //         );
-        //       });
-        // }),
-
-        // body: CustomScrollView(physics: BouncingScrollPhysics(), slivers: [
-        //   SliverAppBar(
-        //     backgroundColor: bgDarkcolor,
-        //     pinned: false,
-        //     expandedHeight: 50,
-        //     // AppBar(
-        //     actions: [
-        //       IconButton(
-        //           onPressed: () {
-        //             // showSearch(context: context, delegate: SearchSong());
-        //           },
-        //           icon: Icon(
-        //             Icons.search,
-        //             color: whiteColor,
-        //           )),
-        //       PopupMenuButton(
-        //         color: Colors.black,
-        //         icon: Icon(
-        //           Icons.sort,
-        //           color: whiteColor,
-        //         ),
-        //         itemBuilder: (context) => [
-        //           PopupMenuItem(
-        //             value: Customorder.atoz,
-        //             child: Text(
-        //               " A to Z",
-        //               style: fontStyle(15, whiteColor),
-        //             ),
-        //           ),
-        //           PopupMenuItem(
-        //             value: Customorder.ztoa,
-        //             child: Text(
-        //               "Z to A",
-        //               style: fontStyle(15, whiteColor),
-        //             ),
-        //           ),
-        //         ],
-        //         onSelected: (value) {
-        //           sort.sortby(value);
-        //         },
-        //       )
-        //     ],
-        //     centerTitle: true,
-        //     title: Text(
-        //       "Music Player",
-        //       style: fontStyle(20, Colors.green),
-        //     ),
-        //   ),
-        //   ListenableBuilder(
-        //       listenable: sort,
-        //       builder: (context, snapshot) {
-        //         // return FutureBuilder<List<SongModel>>(
-        //         // future: contoller.audioQuery.querySongs(
-        //         //   ignoreCase: true,
-        //         //   orderType: sort.order,
-        //         //   sortType: null,
-        //         //   uriType: UriType.EXTERNAL,
-        //         // ),
-
-        //         return ListView.builder(
-        //           itemBuilder: (context, index) {
-        //             if (contoller.loading.value) {
-        //               return const SliverFillRemaining(
-        //                 child: Center(
-        //                   child: CircularProgressIndicator(),
-        //                 ),
-        //               );
-        //             } else if (contoller.allsongs.isEmpty ||
-        //                 contoller.loading.value == false) {
-        //               return SliverFillRemaining(
-        //                 child: SliverFillRemaining(
-        //                   child: Center(
-        //                     child: Text(
-        //                       "No song found",
-        //                       style: fontStyle(
-        //                         14,
-        //                         whiteColor,
-        //                       ),
-        //                     ),
-        //                   ),
-        //                 ),
-        //               );
-        //             } else {
-        //               // src.setvalue(snapshot.data);
-        //               return SliverList(
-        //                 delegate: SliverChildBuilderDelegate(
-        //                   (context, index) {
-        //                     final song = contoller.allsongs[index];
-        //                     songs.add(song);
-        //                     return Obx(
-        //                       () => MusicListtile(
-        //                           leading: QueryArtworkWidget(
-        //                             id: song.id,
-        //                             type: ArtworkType.AUDIO,
-        //                             nullArtworkWidget: Container(
-        //                               height: 45,
-        //                               width: 45,
-        //                               decoration: BoxDecoration(
-        //                                 color: Colors.black,
-        //                                 shape: BoxShape.circle,
-        //                               ),
-        //                               child: Icon(
-        //                                 Icons.music_note,
-        //                                 color: whiteColor,
-        //                                 size: 30,
-        //                               ),
-        //                             ),
-        //                           ),
-        //                           onPressed: () {
-        //                             contoller.playaudio(
-        //                                 song.uri, index, song.title);
-        //                             Get.to(() => Player(
-        //                                   songs: contoller.allsongs,
-
-        //                                   // song.artist ?? "Unknown Artist",
-        //                                 ));
-        //                           },
-        //                           musicName: song.title.length > 35
-        //                               ? song.title.substring(0, 35)
-        //                               : song.title,
-        //                           artistName: song.artist ?? "Unknown Artist",
-        //                           trailing: contoller.playindex.value == index &&
-        //                                   contoller.isplaying.value
-        //                               ? Icon(
-        //                                   Icons.play_arrow,
-        //                                   size: 26,
-        //                                   color: whiteColor,
-        //                                 )
-        //                               : Icon(
-        //                                   Icons.circle,
-        //                                   size: 25,
-        //                                   color: bgcolor,
-        //                                 )),
-        //                     );
-        //                   },
-        //                   childCount: contoller.allsongs.length,
-        //                 ),
-        //               );
-        //             }
-        //           },
-        //         );
-        //       })
-        // ]),
-        body: Obx(
-          () => CustomScrollView(
-            physics: BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                backgroundColor: bgDarkcolor,
-                pinned: false,
-                expandedHeight: 50,
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      showSearch(
-                          context: context,
-                          delegate: SearchSong(contoller.allsongs));
-                    },
-                    icon: Icon(Icons.search, color: whiteColor),
-                  ),
-                  PopupMenuButton(
-                    color: Colors.black,
-                    icon: Icon(Icons.sort, color: whiteColor),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: Customorder.atoz,
-                        child: Text("A to Z", style: fontStyle(15, whiteColor)),
-                      ),
-                      PopupMenuItem(
-                        value: Customorder.ztoa,
-                        child: Text("Z to A", style: fontStyle(15, whiteColor)),
-                      ),
-                    ],
-                    onSelected: (value) {
-                      contoller.sorting(value);
-                    },
-                  ),
-                ],
-                centerTitle: true,
-                title: Text(
-                  "Music Player",
-                  style: fontStyle(20, Colors.green),
-                ),
-              ),
-
-              // Loading Indicator
-              if (contoller.loading.value)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-
-              // No songs found
-              else if (contoller.allsongs.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child:
-                        Text("No song found", style: fontStyle(14, whiteColor)),
-                  ),
-                )
-
-              // Song list
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final song = contoller.allsongs[index];
-                      songs.add(song);
-
-                      return Obx(
-                        () => MusicListtile(
-                            leading: QueryArtworkWidget(
-                              id: song.id,
-                              type: ArtworkType.AUDIO,
-                              nullArtworkWidget: Container(
-                                height: 45,
-                                width: 45,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.music_note,
-                                    color: whiteColor, size: 30),
-                              ),
-                            ),
-                            onPressed: () {
-                              contoller.playaudio(song.uri, index, song.title);
-                              Get.to(() => Player(songs: contoller.allsongs));
-                            },
-                            musicName: song.title.length > 35
-                                ? song.title.substring(0, 35)
-                                : song.title,
-                            artistName: song.artist ?? "Unknown Artist",
-                            trailing: contoller.playindex.value == index
-                                ? Icon(Icons.play_arrow,
-                                    size: 26, color: whiteColor)
-                                : Icon(Icons.circle, size: 25, color: bgcolor)),
-                      );
-                    },
-                    childCount: contoller.allsongs.length,
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        bottomNavigationBar: BottomMusicView(songs: songs),
-      ),
-    );
-  }
+  State<HomePage> createState() => _HomePageState();
 }
 
+class _HomePageState extends State<HomePage> {
+  final PlayerController contoller = Get.put(PlayerController());
+  final ScrollController _scrollController = ScrollController();
 
+  static const List<String> _alphabets = [
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+    '#'
+  ];
 
+  static const double _letterHeight = 18.0;
 
+  String? _activeLetter;
+  bool _isDraggingScrollbar = false;
+  bool _showCenterPreview = false;
 
-        // body: ListenableBuilder(
-        //     listenable: sort,
-        //     builder: (context, snapshot) {
-        //       // return FutureBuilder<List<SongModel>>(
-        //       // future: contoller.audioQuery.querySongs(
-        //       //   ignoreCase: true,
-        //       //   orderType: sort.order,
-        //       //   sortType: null,
-        //       //   uriType: UriType.EXTERNAL,
-        //       // ),
+  final Set<int> _selectedSongIds = <int>{};
+  bool get _isSelectionMode => _selectedSongIds.isNotEmpty;
 
-        //       return ListView.builder(
-        //         itemBuilder: (context, index) {
-        //           if (contoller.loading.value) {
-        //             return const SliverFillRemaining(
-        //               child: Center(
-        //                 child: CircularProgressIndicator(),
-        //               ),
-        //             );
-        //           } else if (contoller.allsongs.isEmpty ||
-        //               contoller.loading.value == false) {
-        //             return SliverFillRemaining(
-        //               child: Center(
-        //                 child: Text(
-        //                   "No song found",
-        //                   style: fontStyle(
-        //                     14,
-        //                     whiteColor,
-        //                   ),
-        //                 ),
-        //               ),
-        //             );
-        //           } else {
-        //             // src.setvalue(snapshot.data);
-        //             return SliverList(
-        //               delegate: SliverChildBuilderDelegate(
-        //                 (context, index) {
-        //                   final song = contoller.allsongs[index];
-        //                   songs.add(song);
-        //                   return Obx(
-        //                     () => MusicListtile(
-        //                         leading: QueryArtworkWidget(
-        //                           id: song.id,
-        //                           type: ArtworkType.AUDIO,
-        //                           nullArtworkWidget: Container(
-        //                             height: 45,
-        //                             width: 45,
-        //                             decoration: BoxDecoration(
-        //                               color: Colors.black,
-        //                               shape: BoxShape.circle,
-        //                             ),
-        //                             child: Icon(
-        //                               Icons.music_note,
-        //                               color: whiteColor,
-        //                               size: 30,
-        //                             ),
-        //                           ),
-        //                         ),
-        //                         onPressed: () {
-        //                           contoller.playaudio(
-        //                               song.uri, index, song.title);
-        //                           Get.to(() => Player(
-        //                                 songs: contoller.allsongs,
+  void _toggleSelectSong(SongModel song) {
+    setState(() {
+      if (_selectedSongIds.contains(song.id)) {
+        _selectedSongIds.remove(song.id);
+      } else {
+        _selectedSongIds.add(song.id);
+      }
+    });
+  }
 
-        //                                 // song.artist ?? "Unknown Artist",
-        //                               ));
-        //                         },
-        //                         musicName: song.title.length > 35
-        //                             ? song.title.substring(0, 35)
-        //                             : song.title,
-        //                         artistName: song.artist ?? "Unknown Artist",
-        //                         trailing: contoller.playindex.value == index &&
-        //                                 contoller.isplaying.value
-        //                             ? Icon(
-        //                                 Icons.play_arrow,
-        //                                 size: 26,
-        //                                 color: whiteColor,
-        //                               )
-        //                             : Icon(
-        //                                 Icons.circle,
-        //                                 size: 25,
-        //                                 color: bgcolor,
-        //                               )),
-        //                   );
-        //                 },
-        //                 childCount: contoller.allsongs.length,
-        //               ),
-        //             );
-        //           }
-        //         },
-        //       );
-        //     }),
+  void _shareSelectedSongs() {
+    final toShare = contoller.allsongs
+        .where((s) => _selectedSongIds.contains(s.id))
+        .toList();
+    if (toShare.isEmpty) return;
+    HapticFeedback.lightImpact();
+    contoller.shareSongs(toShare);
+  }
 
-        // body: ListenableBuilder(
-        //   listenable: sort,
-        //   builder: (context, snapshot) {
-        //     if (contoller.loading.value) {
-        //       return const Center(child: CircularProgressIndicator());
-        //     }
+  void _confirmDeleteSong(SongModel song) {
+    _showDeleteWarningDialog(
+      title: "Delete Song?",
+      message:
+          "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
+      songsToDelete: [song],
+    );
+  }
 
-        //     if (contoller.allsongs.isEmpty) {
-        //       return Center(
-        //         child: Text(
-        //           "No song found",
-        //           style: fontStyle(14, whiteColor),
-        //         ),
-        //       );
-        //     }
+  void _confirmDeleteSelectedSongs() {
+    final toDelete = contoller.allsongs
+        .where((s) => _selectedSongIds.contains(s.id))
+        .toList();
+    if (toDelete.isEmpty) return;
 
-        //     return CustomScrollView(
-        //       physics: const BouncingScrollPhysics(),
-        //       slivers: [
-        //         SliverList(
-        //           delegate: SliverChildBuilderDelegate(
-        //             (context, index) {
-        //               final song = contoller.allsongs[index];
-        //               return Obx(
-        //                 () => MusicListtile(
-        //                   leading: QueryArtworkWidget(
-        //                     id: song.id,
-        //                     type: ArtworkType.AUDIO,
-        //                     nullArtworkWidget: Container(
-        //                       height: 45,
-        //                       width: 45,
-        //                       decoration: const BoxDecoration(
-        //                         color: Colors.black,
-        //                         shape: BoxShape.circle,
-        //                       ),
-        //                       child: Icon(
-        //                         Icons.music_note,
-        //                         color: whiteColor,
-        //                         size: 30,
-        //                       ),
-        //                     ),
-        //                   ),
-        //                   onPressed: () {
-        //                     contoller.playaudio(song.uri, index, song.title);
-        //                     Get.to(() => Player(songs: contoller.allsongs));
-        //                   },
-        //                   musicName: song.title.length > 35
-        //                       ? song.title.substring(0, 35)
-        //                       : song.title,
-        //                   artistName: song.artist ?? "Unknown Artist",
-        //                   trailing: contoller.playindex.value == index &&
-        //                           contoller.isplaying.value
-        //                       ? Icon(Icons.play_arrow,
-        //                           size: 26, color: whiteColor)
-        //                       : Icon(Icons.circle, size: 25, color: bgcolor),
-        //                 ),
-        //               );
-        //             },
-        //             childCount: contoller.allsongs.length,
-        //           ),
-        //         ),
-        //       ],
-        //     );
-        //   },
-        // ),
+    _showDeleteWarningDialog(
+      title: "Delete ${toDelete.length} Songs?",
+      message:
+          "Are you sure you want to permanently delete ${toDelete.length} selected song(s) from your device's memory? These files will be completely erased and cannot be recovered.",
+      songsToDelete: toDelete,
+    );
+  }
 
+  void _showDeleteWarningDialog({
+    required String title,
+    required String message,
+    required List<SongModel> songsToDelete,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final themeController = Get.find<ThemeController>();
+        final cardBg = themeController.cardBg;
+        final textPrimary = themeController.textPrimary;
+        final textSecondary = themeController.textSecondary;
+        final borderColor = themeController.borderColor;
 
+        return AlertDialog(
+          backgroundColor: cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: borderColor),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.redAccent,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.acme(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 13.5,
+              color: textSecondary,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.delete_forever_rounded, size: 18),
+              label: const Text(
+                "Delete Permanently",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final count = await contoller.deleteSongs(songsToDelete);
+                if (mounted) {
+                  setState(() {
+                    _selectedSongIds.removeAll(songsToDelete.map((s) => s.id));
+                  });
+                  Get.rawSnackbar(
+                    message: "Permanently deleted $count song(s) from device",
+                    duration: const Duration(seconds: 3),
+                    backgroundColor: const Color(0xff1f212c),
+                    icon: const Icon(Icons.check_circle_outline_rounded,
+                        color: Colors.redAccent),
+                    margin: const EdgeInsets.all(12),
+                    borderRadius: 12,
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-// body: CustomScrollView(
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
-        //   physics: BouncingScrollPhysics(),
-        //   slivers: [
-        //     SliverAppBar(
-        //       backgroundColor: bgDarkcolor,
-        //       pinned: false,
-        //       expandedHeight: 50,
-        //       // AppBar(
-        //       actions: [
-        //         IconButton(
-        //             onPressed: () {
-        //               // showSearch(context: context, delegate: SearchSong());
-        //             },
-        //             icon: Icon(
-        //               Icons.search,
-        //               color: whiteColor,
-        //             )),
-        //         PopupMenuButton(
-        //           color: Colors.black,
-        //           icon: Icon(
-        //             Icons.sort,
-        //             color: whiteColor,
-        //           ),
-        //           itemBuilder: (context) => [
-        //             PopupMenuItem(
-        //               value: Customorder.atoz,
-        //               child: Text(
-        //                 " A to Z",
-        //                 style: fontStyle(15, whiteColor),
-        //               ),
-        //             ),
-        //             PopupMenuItem(
-        //               value: Customorder.ztoa,
-        //               child: Text(
-        //                 "Z to A",
-        //                 style: fontStyle(15, whiteColor),
-        //               ),
-        //             ),
-        //           ],
-        //           onSelected: (value) {
-        //             sort.sortby(value);
-        //           },
-        //         )
-        //       ],
-        //       centerTitle: true,
-        //       title: Text(
-        //         "Music Player",
-        //         style: fontStyle(20, Colors.green),
-        //       ),
-        //     ),
-        //     ListenableBuilder(
-        //         listenable: sort,
-        //         builder: (context, snapshot) {
-        //           // return FutureBuilder<List<SongModel>>(
-        //           // future: contoller.audioQuery.querySongs(
-        //           //   ignoreCase: true,
-        //           //   orderType: sort.order,
-        //           //   sortType: null,
-        //           //   uriType: UriType.EXTERNAL,
-        //           // ),
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-        //           return ListView.builder(
-        //             itemBuilder: (context, index) {
-        //               if (contoller.loading.value) {
-        //                 return const SliverFillRemaining(
-        //                   child: Center(
-        //                     child: CircularProgressIndicator(),
-        //                   ),
-        //                 );
-        //               } else if (contoller.allsongs.isEmpty ||
-        //                   contoller.loading.value == false) {
-        //                 return SliverFillRemaining(
-        //                   child: Center(
-        //                     child: Text(
-        //                       "No song found",
-        //                       style: fontStyle(
-        //                         14,
-        //                         whiteColor,
-        //                       ),
-        //                     ),
-        //                   ),
-        //                 );
-        //               } else {
-        //                 // src.setvalue(snapshot.data);
-        //                 return SliverList(
-        //                   delegate: SliverChildBuilderDelegate(
-        //                     (context, index) {
-        //                       final song = contoller.allsongs[index];
-        //                       songs.add(song);
-        //                       return Obx(
-        //                         () => MusicListtile(
-        //                             leading: QueryArtworkWidget(
-        //                               id: song.id,
-        //                               type: ArtworkType.AUDIO,
-        //                               nullArtworkWidget: Container(
-        //                                 height: 45,
-        //                                 width: 45,
-        //                                 decoration: BoxDecoration(
-        //                                   color: Colors.black,
-        //                                   shape: BoxShape.circle,
-        //                                 ),
-        //                                 child: Icon(
-        //                                   Icons.music_note,
-        //                                   color: whiteColor,
-        //                                   size: 30,
-        //                                 ),
-        //                               ),
-        //                             ),
-        //                             onPressed: () {
-        //                               contoller.playaudio(
-        //                                   song.uri, index, song.title);
-        //                               Get.to(() => Player(
-        //                                     songs: contoller.allsongs,
+  void _onScroll() {
+    if (_isDraggingScrollbar) return;
+    final songs = contoller.allsongs;
+    if (songs.isEmpty || !_scrollController.hasClients) return;
 
-        //                                     // song.artist ?? "Unknown Artist",
-        //                                   ));
-        //                             },
-        //                             musicName: song.title.length > 35
-        //                                 ? song.title.substring(0, 35)
-        //                                 : song.title,
-        //                             artistName: song.artist ?? "Unknown Artist",
-        //                             trailing:
-        //                                 contoller.playindex.value == index &&
-        //                                         contoller.isplaying.value
-        //                                     ? Icon(
-        //                                         Icons.play_arrow,
-        //                                         size: 26,
-        //                                         color: whiteColor,
-        //                                       )
-        //                                     : Icon(
-        //                                         Icons.circle,
-        //                                         size: 25,
-        //                                         color: bgcolor,
-        //                                       )),
-        //                       );
-        //                     },
-        //                     childCount: contoller.allsongs.length,
-        //                   ),
-        //                 );
-        //               }
-        //             },
-        //           );
-        //         })
+    const double itemHeight = 78.0;
+    final double offset = _scrollController.offset;
+    final int topIndex =
+        (offset / itemHeight).floor().clamp(0, songs.length - 1);
 
-        //     // SliverList.builder(
-        //     //   itemCount: 15,
-        //     //   itemBuilder: (context, index) => MusicListtile(
-        //     //       onPressed: () {
-        //     //         Get.to(Player());
-        //     //       },
-        //     //       musicName: "musicName",
-        //     //       artistName: "artistName"),
-        //     // )
-        //   ],
-        // ),
+    final currentLetter = _getLetterForSong(songs[topIndex].title);
+    if (_activeLetter != currentLetter) {
+      setState(() {
+        _activeLetter = currentLetter;
+      });
+    }
+  }
+
+  String _getLetterForSong(String title) {
+    final clean = title.trim();
+    if (clean.isEmpty) return '#';
+    final firstChar = clean[0].toUpperCase();
+    if (RegExp(r'[A-Z]').hasMatch(firstChar)) {
+      return firstChar;
+    }
+    return '#';
+  }
+
+  void _scrollToLetter(String letter) {
+    final songs = contoller.allsongs;
+    if (songs.isEmpty || !_scrollController.hasClients) return;
+
+    final targetUpper = letter.toUpperCase();
+    int targetIndex = -1;
+
+    if (targetUpper == '#') {
+      for (int i = 0; i < songs.length; i++) {
+        final title = songs[i].title.trim();
+        if (title.isNotEmpty && !RegExp(r'[a-zA-Z]').hasMatch(title[0])) {
+          targetIndex = i;
+          break;
+        }
+      }
+    } else {
+      for (int i = 0; i < songs.length; i++) {
+        final title = songs[i].title.trim();
+        if (title.isNotEmpty) {
+          final firstChar = title[0].toUpperCase();
+          if (RegExp(r'[A-Z]').hasMatch(firstChar)) {
+            if (firstChar.compareTo(targetUpper) >= 0) {
+              targetIndex = i;
+              break;
+            }
+          } else {
+            // Reached non-letters ('#') at the bottom
+            targetIndex = i;
+            break;
+          }
+        }
+      }
+    }
+
+    if (targetIndex == -1) {
+      targetIndex = songs.length - 1;
+    }
+
+    const itemHeight = 78.0;
+    final targetOffset = (targetIndex * itemHeight).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.jumpTo(targetOffset);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<SongModel> songs = [];
+    final themeController = Get.put(ThemeController());
+
+    return Obx(() {
+      final isDark = themeController.isDarkMode.value;
+      final scaffoldBg = themeController.scaffoldBg;
+      final cardBg = themeController.cardBg;
+      final textPrimary = themeController.textPrimary;
+      final textSecondary = themeController.textSecondary;
+      final accentGreen = themeController.accentGreen;
+      final accentBlue = themeController.accentBlue;
+      final inactiveAlphabetColor = isDark
+          ? Colors.white.withValues(alpha: 0.75)
+          : const Color(0xff475569);
+
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          log('didPop: $didPop');
+
+          if (didPop) return;
+
+          // If in multi-selection mode, pressing back cancels selection
+          if (_isSelectionMode) {
+            setState(() {
+              _selectedSongIds.clear();
+            });
+            return;
+          }
+
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: cardBg,
+              title: Text('Exit App?',
+                  style: TextStyle(
+                      color: textPrimary, fontWeight: FontWeight.bold)),
+              content: Text('Do you really want to exit?',
+                  style: TextStyle(color: textSecondary)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Cancel', style: TextStyle(color: textSecondary)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('Exit',
+                      style: TextStyle(
+                          color: accentGreen, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldExit == true) {
+            SystemNavigator.pop();
+          }
+        },
+        child: Scaffold(
+          drawer: const AppDrawer(),
+          backgroundColor: scaffoldBg,
+          body: Obx(
+            () {
+              if (contoller.loading.value) {
+                return Center(
+                  child: CircularProgressIndicator(color: accentGreen),
+                );
+              }
+
+              if (contoller.allsongs.isEmpty) {
+                return Center(
+                  child: Text(
+                    "No song found",
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: textSecondary,
+                    ),
+                  ),
+                );
+              }
+
+              _activeLetter ??=
+                  _getLetterForSong(contoller.allsongs.first.title);
+
+              return Stack(
+                children: [
+                  // Song list with full width under the sorting bar
+                  CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverAppBar(
+                        backgroundColor: scaffoldBg,
+                        pinned: true,
+                        surfaceTintColor: scaffoldBg,
+                        floating: true,
+                        automaticallyImplyLeading: false,
+                        elevation: 0,
+                        centerTitle: false,
+                        leading: _isSelectionMode
+                            ? IconButton(
+                                icon: Icon(Icons.close_rounded,
+                                    color: textPrimary, size: 24),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedSongIds.clear();
+                                  });
+                                },
+                              )
+                            : Builder(
+                                builder: (context) => IconButton(
+                                  icon: Icon(Icons.menu_rounded,
+                                      color: textPrimary, size: 26),
+                                  onPressed: () =>
+                                      Scaffold.of(context).openDrawer(),
+                                ),
+                              ),
+                        title: Text(
+                          _isSelectionMode
+                              ? "${_selectedSongIds.length} Selected"
+                              : "Music Player",
+                          style: GoogleFonts.acme(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: _isSelectionMode ? accentBlue : accentGreen,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        actions: [
+                          if (_isSelectionMode) ...[
+                            IconButton(
+                              tooltip: _selectedSongIds.length ==
+                                      contoller.allsongs.length
+                                  ? "Deselect All"
+                                  : "Select All",
+                              icon: Icon(
+                                _selectedSongIds.length ==
+                                        contoller.allsongs.length
+                                    ? Icons.deselect_rounded
+                                    : Icons.select_all_rounded,
+                                color: textPrimary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  if (_selectedSongIds.length ==
+                                      contoller.allsongs.length) {
+                                    _selectedSongIds.clear();
+                                  } else {
+                                    _selectedSongIds.addAll(
+                                        contoller.allsongs.map((s) => s.id));
+                                  }
+                                });
+                              },
+                            ),
+                            IconButton(
+                              tooltip: "Share Selected",
+                              icon:
+                                  Icon(Icons.share_rounded, color: accentBlue),
+                              onPressed: _shareSelectedSongs,
+                            ),
+                            IconButton(
+                              tooltip: "Delete Selected",
+                              icon: const Icon(Icons.delete_forever_rounded,
+                                  color: Colors.redAccent),
+                              onPressed: _confirmDeleteSelectedSongs,
+                            ),
+                          ] else ...[
+                            IconButton(
+                              onPressed: () {
+                                showSearch(
+                                  context: context,
+                                  delegate: SearchSong(contoller.allsongs),
+                                );
+                              },
+                              icon: Icon(Icons.search, color: textPrimary),
+                            ),
+                          ],
+                        ],
+                      ),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final song = contoller.allsongs[index];
+                            songs.add(song);
+
+                            final isSelected =
+                                _selectedSongIds.contains(song.id);
+
+                            return Obx(
+                              () => MusicListtile(
+                                songUri: song.uri,
+                                songId: song.id,
+                                isCurrentSong: contoller.songUri == song.uri,
+                                isSelectionMode: _isSelectionMode,
+                                isSelected: isSelected,
+                                leading: QueryArtworkWidget(
+                                  id: song.id,
+                                  type: ArtworkType.AUDIO,
+                                  nullArtworkWidget: Container(
+                                    height: 45,
+                                    width: 45,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.black54
+                                          : const Color(0xffe2e8f0),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.music_note,
+                                      color: textPrimary,
+                                      size: 26,
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (_isSelectionMode) {
+                                    _toggleSelectSong(song);
+                                  } else {
+                                    contoller.playOrNavigate(
+                                      song,
+                                      index,
+                                      contoller.allsongs,
+                                    );
+                                  }
+                                },
+                                onLongPress: () {
+                                  _toggleSelectSong(song);
+                                },
+                                onMenuShare: () => contoller.shareSongs([song]),
+                                onMenuSelect: () {
+                                  setState(() {
+                                    _selectedSongIds.add(song.id);
+                                  });
+                                },
+                                onMenuDelete: () => _confirmDeleteSong(song),
+                                musicName: song.title,
+                                artistName: song.artist ?? "Unknown Artist",
+                                trailing: !_isSelectionMode &&
+                                        contoller.songUri == song.uri &&
+                                        contoller.isplaying.value
+                                    ? Icon(
+                                        Icons.play_arrow_rounded,
+                                        size: 28,
+                                        color: accentGreen,
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                          childCount: contoller.allsongs.length,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Vertical A-Z sorting bar aligned on the right side over the tiles
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          right: 4.0, top: 56.0, bottom: 8.0),
+                      child: AlphabetScrollbar(
+                        alphabets: _alphabets,
+                        activeLetter: _activeLetter,
+                        letterHeight: _letterHeight,
+                        activeColor: accentBlue,
+                        inactiveColor: inactiveAlphabetColor,
+                        backgroundColor: isDark
+                            ? const Color(0xff1f212c).withValues(alpha: 0.88)
+                            : Colors.white.withValues(alpha: 0.92),
+                        borderColor: isDark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : const Color(0xffcbd5e1),
+                        isDark: isDark,
+                        onLetterSelected: (letter) {
+                          _isDraggingScrollbar = true;
+                          setState(() {
+                            _activeLetter = letter;
+                            _showCenterPreview = true;
+                          });
+                          _scrollToLetter(letter);
+                        },
+                        onDragEnd: () {
+                          _isDraggingScrollbar = false;
+                          setState(() {
+                            _showCenterPreview = false;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Floating letter preview capsule in the center of the screen
+                  AnimatedOpacity(
+                    opacity:
+                        _showCenterPreview && _activeLetter != null ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 80,
+                          height: 88,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? cardBg.withValues(alpha: 0.94)
+                                : Colors.white.withValues(alpha: 0.96),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: accentBlue.withValues(alpha: 0.8),
+                              width: 2.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.7)
+                                    : const Color(0xff64748b)
+                                        .withValues(alpha: 0.2),
+                                blurRadius: 22,
+                                spreadRadius: 3,
+                                offset: const Offset(0, 6),
+                              ),
+                              if (isDark)
+                                BoxShadow(
+                                  color: accentBlue.withValues(alpha: 0.3),
+                                  blurRadius: 18,
+                                  spreadRadius: 1,
+                                ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              _activeLetter ?? '',
+                              style: GoogleFonts.acme(
+                                fontSize: 42,
+                                fontWeight: FontWeight.bold,
+                                color: accentBlue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          bottomNavigationBar: BottomMusicView(songs: songs),
+        ),
+      );
+    });
+  }
+}

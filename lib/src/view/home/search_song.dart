@@ -1,48 +1,182 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:music/src/colors/colors.dart';
 import 'package:music/src/controller/audio_controller.dart';
+import 'package:music/src/controller/theme_controller.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
-import 'package:music/src/view/player%20view/player_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class SearchSong extends SearchDelegate {
   final List<SongModel> songs;
   SearchSong(this.songs);
+
   final controller = Get.find<PlayerController>();
+
+  void _confirmDeleteSong(BuildContext context, SongModel song) {
+    final themeController = Get.find<ThemeController>();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: themeController.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: themeController.borderColor),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.redAccent,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Delete Song?",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: themeController.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
+            style: TextStyle(
+              fontSize: 13.5,
+              color: themeController.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: themeController.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.delete_forever_rounded, size: 18),
+              label: const Text(
+                "Delete Permanently",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await controller.deleteSongs([song]);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final themeController = Get.put(ThemeController());
+    final cardBg = themeController.cardBg;
+    final textPrimary = themeController.textPrimary;
+    final textSecondary = themeController.textSecondary;
+
+    return ThemeData(
+      scaffoldBackgroundColor: themeController.scaffoldBg,
+      appBarTheme: AppBarTheme(
+        backgroundColor: cardBg,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textPrimary),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(
+            color: textSecondary.withValues(alpha: 0.6), fontSize: 14),
+        border: InputBorder.none,
+      ),
+      textTheme: TextTheme(
+        titleLarge: TextStyle(color: textPrimary, fontSize: 16),
+      ),
+    );
+  }
 
   @override
   List<Widget>? buildActions(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
     return [
       IconButton(
         onPressed: () {
           query = '';
         },
-        icon: Icon(Icons.clear),
+        icon: Icon(Icons.clear_rounded, color: themeController.textPrimary),
       )
     ];
   }
 
   @override
   Widget? buildLeading(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
     return IconButton(
       onPressed: () {
         Navigator.pop(context);
       },
-      icon: Icon(Icons.arrow_back),
+      icon: Icon(Icons.arrow_back_ios_new_rounded,
+          color: themeController.textPrimary, size: 20),
     );
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    final List<SongModel> seacrhResult = songs.where((item) {
-      return item.title.toLowerCase().contains(query.toLowerCase());
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode.value;
+    final textPrimary = themeController.textPrimary;
+    final accentGreen = themeController.accentGreen;
+
+    final List<SongModel> searchResult = songs.where((item) {
+      return item.title.toLowerCase().contains(query.toLowerCase()) ||
+          (item.artist ?? "").toLowerCase().contains(query.toLowerCase());
     }).toList();
+
+    if (searchResult.isEmpty) {
+      return Center(
+        child: Text(
+          "No songs found matching '$query'",
+          style: TextStyle(color: themeController.textSecondary, fontSize: 14),
+        ),
+      );
+    }
+
     return ListView.builder(
-      itemCount: seacrhResult.length,
+      physics: const BouncingScrollPhysics(),
+      itemCount: searchResult.length,
       itemBuilder: (context, index) {
-        final song = seacrhResult[index];
-        return MusicListtile(
+        final song = searchResult[index];
+        return Obx(() {
+          final isCurrent = controller.songUri == song.uri;
+          final isPlaying = isCurrent && controller.isplaying.value;
+
+          return MusicListtile(
+            songUri: song.uri,
+            songId: song.id,
+            isCurrentSong: isCurrent,
+            isPlaying: isPlaying,
             leading: QueryArtworkWidget(
               id: song.id,
               type: ArtworkType.AUDIO,
@@ -50,41 +184,56 @@ class SearchSong extends SearchDelegate {
                 height: 45,
                 width: 45,
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: isDark ? Colors.black54 : const Color(0xffe2e8f0),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.music_note, color: whiteColor, size: 30),
+                child: Icon(Icons.music_note, color: textPrimary, size: 26),
               ),
             ),
             onPressed: () {
-              controller.playaudio(song.uri, index, song.title);
-              Get.to(() => Player(songs: controller.allsongs));
+              final origIdx = songs.indexWhere((s) => s.id == song.id);
+              controller.playOrNavigate(
+                  song, origIdx >= 0 ? origIdx : index, songs);
             },
-            musicName: song.title.length > 35
-                ? song.title.substring(0, 35)
-                : song.title,
+            musicName: song.title,
             artistName: song.artist ?? "Unknown Artist",
-            trailing: Obx(
-              () {
-                return controller.playindex.value == index
-                    ? Icon(Icons.play_arrow, size: 26, color: whiteColor)
-                    : Icon(Icons.circle, size: 0, color: bgcolor);
-              },
-            ));
+            onMenuShare: () => controller.shareSongs([song]),
+            onMenuDelete: () => _confirmDeleteSong(context, song),
+            trailing: isPlaying
+                ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
+                : null,
+          );
+        });
       },
     );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final List<SongModel> seacrhSuggestion = songs.where((item) {
-      return item.title.toLowerCase().contains(query.toLowerCase());
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode.value;
+    final textPrimary = themeController.textPrimary;
+    final accentGreen = themeController.accentGreen;
+
+    final List<SongModel> searchSuggestion = songs.where((item) {
+      return item.title.toLowerCase().contains(query.toLowerCase()) ||
+          (item.artist ?? "").toLowerCase().contains(query.toLowerCase());
     }).toList();
+
     return ListView.builder(
-      itemCount: seacrhSuggestion.length,
+      physics: const BouncingScrollPhysics(),
+      itemCount: searchSuggestion.length,
       itemBuilder: (context, index) {
-        final song = seacrhSuggestion[index];
-        return MusicListtile(
+        final song = searchSuggestion[index];
+        return Obx(() {
+          final isCurrent = controller.songUri == song.uri;
+          final isPlaying = isCurrent && controller.isplaying.value;
+
+          return MusicListtile(
+            songUri: song.uri,
+            songId: song.id,
+            isCurrentSong: isCurrent,
+            isPlaying: isPlaying,
             leading: QueryArtworkWidget(
               id: song.id,
               type: ArtworkType.AUDIO,
@@ -92,27 +241,26 @@ class SearchSong extends SearchDelegate {
                 height: 45,
                 width: 45,
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: isDark ? Colors.black54 : const Color(0xffe2e8f0),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.music_note, color: whiteColor, size: 30),
+                child: Icon(Icons.music_note, color: textPrimary, size: 26),
               ),
             ),
             onPressed: () {
-              controller.playaudio(song.uri, index, song.title);
-              Get.to(() => Player(songs: controller.allsongs));
+              final origIdx = songs.indexWhere((s) => s.id == song.id);
+              controller.playOrNavigate(
+                  song, origIdx >= 0 ? origIdx : index, songs);
             },
-            musicName: song.title.length > 35
-                ? song.title.substring(0, 35)
-                : song.title,
+            musicName: song.title,
             artistName: song.artist ?? "Unknown Artist",
-            trailing: Obx(
-              () {
-                return controller.playindex.value == index
-                    ? Icon(Icons.play_arrow, size: 26, color: whiteColor)
-                    : Icon(Icons.circle, size: 25, color: bgcolor);
-              },
-            ));
+            onMenuShare: () => controller.shareSongs([song]),
+            onMenuDelete: () => _confirmDeleteSong(context, song),
+            trailing: isPlaying
+                ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
+                : null,
+          );
+        });
       },
     );
   }
