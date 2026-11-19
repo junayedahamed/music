@@ -282,6 +282,9 @@ class _HomePageState extends State<HomePage> {
 
                             return Obx(
                               () => MusicListtile(
+                                songUri: song.uri,
+                                songId: song.id,
+                                isCurrentSong: contoller.songUri == song.uri,
                                 leading: QueryArtworkWidget(
                                   id: song.id,
                                   type: ArtworkType.AUDIO,
@@ -310,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                                 },
                                 musicName: song.title,
                                 artistName: song.artist ?? "Unknown Artist",
-                                trailing: contoller.playindex.value == index &&
+                                trailing: contoller.songUri == song.uri &&
                                         contoller.isplaying.value
                                     ? Icon(
                                         Icons.play_arrow_rounded,

@@ -161,11 +161,15 @@ class PlaylistDetailScreen extends StatelessWidget {
                     final song = playlistSongs[index];
 
                     return Obx(() {
+                      final isCurrent = playerController.songUri == song.uri;
                       final isPlaying =
-                          playerController.playindex.value == index &&
-                              playerController.isplaying.value;
+                          isCurrent && playerController.isplaying.value;
 
                       return MusicListtile(
+                        songUri: song.uri,
+                        songId: song.id,
+                        isCurrentSong: isCurrent,
+                        isPlaying: isPlaying,
                         leading: QueryArtworkWidget(
                           id: song.id,
                           type: ArtworkType.AUDIO,

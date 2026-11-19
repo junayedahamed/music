@@ -33,11 +33,23 @@ class Player extends StatelessWidget {
       final borderColor = themeController.borderColor;
       final accentBlue = themeController.accentBlue;
 
+      final activeSongs = controller.currentPlaylist.isNotEmpty
+          ? controller.currentPlaylist
+          : songs;
       final idx = controller.playindex.value;
-      final safeSong = (idx >= 0 && idx < songs.length) ? songs[idx] : null;
+      final safeSong = (idx >= 0 &&
+              idx < activeSongs.length &&
+              activeSongs[idx].uri == controller.songUri)
+          ? activeSongs[idx]
+          : (activeSongs.firstWhereOrNull((s) =>
+                  s.uri == controller.songUri ||
+                  s.id == controller.currentSongId.value) ??
+              ((idx >= 0 && idx < activeSongs.length)
+                  ? activeSongs[idx]
+                  : null));
       final title = safeSong?.title ?? controller.songname.value;
-      final artist = safeSong?.artist ?? "Unknown Artist";
-      final songId = safeSong?.id ?? 0;
+      final artist = safeSong?.artist ?? controller.artistName.value;
+      final songId = safeSong?.id ?? controller.currentSongId.value;
       final isFav = favController.isFavorite(songId);
 
       return Scaffold(
@@ -152,9 +164,9 @@ class Player extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30),
-                          child: safeSong != null
+                          child: (safeSong != null || songId > 0)
                               ? QueryArtworkWidget(
-                                  id: safeSong.id,
+                                  id: safeSong?.id ?? songId,
                                   type: ArtworkType.AUDIO,
                                   artworkWidth: double.infinity,
                                   artworkHeight: double.infinity,

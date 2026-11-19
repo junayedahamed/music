@@ -88,10 +88,14 @@ class SearchSong extends SearchDelegate {
       itemBuilder: (context, index) {
         final song = searchResult[index];
         return Obx(() {
-          final isPlaying = controller.songUri == song.uri &&
-              controller.isplaying.value;
+          final isCurrent = controller.songUri == song.uri;
+          final isPlaying = isCurrent && controller.isplaying.value;
 
           return MusicListtile(
+            songUri: song.uri,
+            songId: song.id,
+            isCurrentSong: isCurrent,
+            isPlaying: isPlaying,
             leading: QueryArtworkWidget(
               id: song.id,
               type: ArtworkType.AUDIO,
@@ -139,10 +143,14 @@ class SearchSong extends SearchDelegate {
       itemBuilder: (context, index) {
         final song = searchSuggestion[index];
         return Obx(() {
-          final isPlaying = controller.songUri == song.uri &&
-              controller.isplaying.value;
+          final isCurrent = controller.songUri == song.uri;
+          final isPlaying = isCurrent && controller.isplaying.value;
 
           return MusicListtile(
+            songUri: song.uri,
+            songId: song.id,
+            isCurrentSong: isCurrent,
+            isPlaying: isPlaying,
             leading: QueryArtworkWidget(
               id: song.id,
               type: ArtworkType.AUDIO,

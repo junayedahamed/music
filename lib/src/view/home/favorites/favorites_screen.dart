@@ -234,6 +234,8 @@ class FavoritesScreen extends StatelessWidget {
                         final song = favSongs[index];
 
                         return MusicListtile(
+                          songUri: song.uri,
+                          songId: song.id,
                           leading: QueryArtworkWidget(
                             id: song.id,
                             type: ArtworkType.AUDIO,

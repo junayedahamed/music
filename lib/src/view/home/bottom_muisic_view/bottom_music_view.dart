@@ -61,7 +61,11 @@ class BottomMusicView extends StatelessWidget {
                   onTap: () {
                     HapticFeedback.lightImpact();
                     Get.to(
-                      () => Player(songs: songs),
+                      () => Player(
+                        songs: playercontroller.currentPlaylist.isNotEmpty
+                            ? playercontroller.currentPlaylist
+                            : songs,
+                      ),
                       transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 150),
                     );
