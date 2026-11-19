@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
     );
 
     return GetMaterialApp(
-      title: 'Juna_play',
+      title: 'Juna_Music',
       debugShowCheckedModeBanner: false,
       defaultTransition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 150),

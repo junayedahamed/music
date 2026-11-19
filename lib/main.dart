@@ -7,7 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
     androidNotificationChannelId: "com.example.music",
-    androidNotificationChannelName: 'JMusic',
+    androidNotificationChannelName: 'Music',
     androidNotificationOngoing: false,
     androidShowNotificationBadge: false,
     androidStopForegroundOnPause: false,

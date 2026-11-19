@@ -181,17 +181,12 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
                             ),
                           ),
 
-                          // Inner gradient disc with music note
+                          // Inner circular disc with app logo
                           Container(
                             width: 82,
                             height: 82,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [accentBlue, const Color(0xff0081cb)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: accentBlue.withValues(alpha: 0.5),
@@ -199,12 +194,13 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
                                   offset: const Offset(0, 4),
                                 ),
                               ],
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.music_note_rounded,
-                                size: 44,
-                                color: Colors.white,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                width: 1.5,
+                              ),
+                              image: const DecorationImage(
+                                image: AssetImage('assets/applogo.png'),
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),
@@ -217,10 +213,10 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
 
                   // Brand Title
                   Text(
-                    "JUNA PLAY",
+                    "MUSIC",
                     style: GoogleFonts.acme(
-                      fontSize: 32,
-                      letterSpacing: 4.5,
+                      fontSize: 34,
+                      letterSpacing: 6.0,
                       fontWeight: FontWeight.bold,
                       color: textPrimary,
                     ),
