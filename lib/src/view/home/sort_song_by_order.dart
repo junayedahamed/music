@@ -3,8 +3,8 @@ import 'package:music/src/view/home/home_view.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class SortSongByOrder extends ChangeNotifier {
-  var _order = OrderType.ASC_OR_SMALLER;
-  get order => _order;
+  OrderType _order = OrderType.ASC_OR_SMALLER;
+  OrderType get order => _order;
   // setSorttype(value) {
   //   if (value == Customorder.duration) {
   //     _order = SongSortType.DURATION;
@@ -21,7 +21,7 @@ class SortSongByOrder extends ChangeNotifier {
   //   notifyListeners();
   // }
 
-  sortby(value) {
+  void sortby(Customorder value) {
     // print(_order);
     if (value == Customorder.ztoa) {
       _order = OrderType.DESC_OR_GREATER;

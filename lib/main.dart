@@ -4,16 +4,16 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:music/app.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
     androidNotificationChannelId: "com.example.music",
     androidNotificationChannelName: 'JMusic',
-    androidNotificationOngoing: true,
+    androidNotificationOngoing: false,
     androidShowNotificationBadge: false,
-    androidStopForegroundOnPause: true,
-    notificationColor: Colors.white,
+    androidStopForegroundOnPause: false,
+    notificationColor: const Color(0xff00b0ff),
     preloadArtwork: true,
   );
-  WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox<Map>("music");
   runApp(const MyApp());

@@ -1,6 +1,8 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:music/src/controller/audio_controller.dart';
+import 'package:music/src/controller/theme_controller.dart';
 import 'package:music/src/view/home/home_view.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -12,48 +14,51 @@ class SplashScreenMusic extends StatefulWidget {
 }
 
 class _SplashScreenMusicState extends State<SplashScreenMusic> {
-  final PlayerController _controller = PlayerController();
+  late final PlayerController _controller;
+  late final ThemeController _themeController;
 
   @override
   void initState() {
     super.initState();
+    _themeController = Get.put(ThemeController());
+    _controller = Get.put(PlayerController());
     _permission();
   }
 
-  _permission() async {
+  Future<void> _permission() async {
     if (await Permission.audio.isDenied ||
         await Permission.audio.isPermanentlyDenied) {
       _controller.checkAndRequestPermission().then((onValue) {
         _navigate();
       });
-    }
-    // status.then((onValue) {
-    //   log(onValue.toString());
-    // });
-    else {
+    } else {
       _navigate();
     }
   }
 
   void _navigate() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => HomePage(),
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => const HomePage(),
       ));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Lottie.asset(
-          'assets/music_welcome.json',
-          fit: BoxFit.cover,
+    return Obx(() {
+      final scaffoldBg = _themeController.scaffoldBg;
+
+      return Scaffold(
+        backgroundColor: scaffoldBg,
+        body: Center(
+          child: Lottie.asset(
+            'assets/music_welcome.json',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

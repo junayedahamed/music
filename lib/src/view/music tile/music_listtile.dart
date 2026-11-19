@@ -1,6 +1,6 @@
+import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:music/src/colors/colors.dart';
-import 'package:music/src/colors/styled_text.dart';
+import 'package:music/src/controller/theme_controller.dart';
 
 class MusicListtile extends StatelessWidget {
   const MusicListtile({
@@ -11,6 +11,7 @@ class MusicListtile extends StatelessWidget {
     required this.leading,
     this.trailing,
   });
+
   final String musicName;
   final VoidCallback onPressed;
   final String artistName;
@@ -19,35 +20,50 @@ class MusicListtile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        tileColor: bgcolor,
-        onTap: onPressed,
-        leading: leading,
-        title: Text(
-          musicName,
-          style: fontStyle(
-            15,
-            whiteColor,
-          ),
-        ),
+    final themeController = Get.put(ThemeController());
 
-        trailing: trailing ?? Icon(Icons.circle, size: 25, color: bgcolor),
-        subtitle: Text(
-          artistName,
-          style: fontStyle(
-            11,
-            whiteColor,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      child: Obx(() {
+        final cardBg = themeController.cardBg;
+        final titleColor = themeController.textPrimary;
+        final subtitleColor = themeController.textSecondary;
+
+        return ListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: themeController.borderColor,
+              width: 0.8,
+            ),
           ),
-        ),
-        // trailing: Icon(
-        //   Icons.play_arrow,
-        //   size: 26,
-        //   color: whiteColor,
-        // ),
-      ),
+          tileColor: cardBg,
+          onTap: onPressed,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          leading: leading,
+          title: Text(
+            musicName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: titleColor,
+            ),
+          ),
+          subtitle: Text(
+            artistName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: subtitleColor,
+            ),
+          ),
+          trailing: trailing,
+        );
+      }),
     );
   }
 }
