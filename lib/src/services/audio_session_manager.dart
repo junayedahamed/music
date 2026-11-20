@@ -11,7 +11,6 @@ class AudioSessionManager {
 
   Future<void> init({
     required Function(bool shouldPlay) onInterruptionChange,
-    required Function(double volume) onDuckChange,
     required Function() onBecomingNoisy,
   }) async {
     try {
@@ -22,7 +21,7 @@ class AudioSessionManager {
         if (event.begin) {
           switch (event.type) {
             case AudioInterruptionType.duck:
-              onDuckChange(0.7);
+              // just_audio native engine handles transient ducking natively
               break;
             case AudioInterruptionType.pause:
             case AudioInterruptionType.unknown:
@@ -33,11 +32,9 @@ class AudioSessionManager {
           switch (event.type) {
             case AudioInterruptionType.duck:
             case AudioInterruptionType.unknown:
-              onDuckChange(1.0);
               break;
             case AudioInterruptionType.pause:
               onInterruptionChange(true);
-              onDuckChange(1.0);
               break;
           }
         }

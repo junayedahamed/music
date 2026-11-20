@@ -5,6 +5,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:music/src/services/audio_session_manager.dart';
 import 'package:music/src/services/playback_state_mapper.dart';
+import 'package:music/src/services/queue_nav_helper.dart';
 
 /// Single source of truth for audio playback and Android media notifications.
 class MusicAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
@@ -29,7 +30,6 @@ class MusicAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
     _player.setVolume(1.0);
     _sessionManager.init(
       onInterruptionChange: (play) => play ? this.play() : pause(),
-      onDuckChange: (vol) => _player.setVolume(vol),
       onBecomingNoisy: pause,
     );
     _initPlayerListeners();
@@ -107,11 +107,12 @@ class MusicAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
         initialIndex: safeIndex,
         initialPosition: initialPosition,
       );
+      await _player.setVolume(1.0);
       await _player.setLoopMode(_loopMode);
       await _player.setShuffleModeEnabled(_isShuffleEnabled);
 
       if (play) {
-        await _player.play();
+        await this.play();
       } else {
         await _player.pause();
       }
@@ -123,7 +124,7 @@ class MusicAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
   @override
   Future<void> play() async {
     await _sessionManager.setActive(true);
-    if (_player.volume < 1.0) await _player.setVolume(1.0);
+    await _player.setVolume(1.0);
     await _player.play();
   }
 
@@ -142,46 +143,30 @@ class MusicAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
 
   @override
   Future<void> skipToNext() async {
-    final q = queue.value;
-    if (q.isEmpty) return;
-    final currentIdx = _player.currentIndex ?? 0;
-    int nextIdx;
-
-    if (_isShuffleEnabled && q.length > 1) {
-      final rand = DateTime.now().millisecondsSinceEpoch;
-      nextIdx = (currentIdx + 1 + (rand % (q.length - 1))) % q.length;
+    final nextIdx = QueueNavHelper.getNextIndex(
+      queue: queue.value,
+      currentIndex: _player.currentIndex ?? 0,
+      isShuffleEnabled: _isShuffleEnabled,
+      loopMode: _loopMode,
+    );
+    if (nextIdx != null) {
+      await skipToQueueItem(nextIdx);
     } else {
-      nextIdx = currentIdx + 1;
-      if (nextIdx >= q.length) {
-        if (_loopMode == LoopMode.off) {
-          pause();
-          return;
-        }
-        nextIdx = 0;
-      }
+      pause();
     }
-    await skipToQueueItem(nextIdx);
   }
 
   @override
   Future<void> skipToPrevious() async {
-    final q = queue.value;
-    if (q.isEmpty) return;
-    final currentIdx = _player.currentIndex ?? 0;
-    int prevIdx;
-
-    if (_isShuffleEnabled && q.length > 1) {
-      final rand = DateTime.now().millisecondsSinceEpoch;
-      prevIdx = (currentIdx - 1 - (rand % (q.length - 1))) % q.length;
-      if (prevIdx < 0) prevIdx += q.length;
-    } else {
-      prevIdx = currentIdx - 1;
-      if (prevIdx < 0) {
-        if (_loopMode == LoopMode.off) return;
-        prevIdx = q.length - 1;
-      }
+    final prevIdx = QueueNavHelper.getPreviousIndex(
+      queue: queue.value,
+      currentIndex: _player.currentIndex ?? 0,
+      isShuffleEnabled: _isShuffleEnabled,
+      loopMode: _loopMode,
+    );
+    if (prevIdx != null) {
+      await skipToQueueItem(prevIdx);
     }
-    await skipToQueueItem(prevIdx);
   }
 
   @override

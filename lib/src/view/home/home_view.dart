@@ -9,9 +9,11 @@ import 'package:music/src/view/home/bottom_muisic_view/bottom_music_view.dart';
 export 'package:music/src/utils/custom_order.dart';
 import 'package:music/src/view/home/drawer/app_drawer.dart';
 import 'package:music/src/view/home/widgets/alphabet_preview_overlay.dart';
+import 'package:music/src/view/home/widgets/alphabet_scroll_helper.dart';
 import 'package:music/src/view/home/widgets/exit_confirmation_dialog.dart';
 import 'package:music/src/view/home/widgets/home_alphabet_sidebar.dart';
 import 'package:music/src/view/home/widgets/home_app_bar.dart';
+import 'package:music/src/view/home/widgets/home_empty_view.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
 import 'package:music/src/view/widgets/delete_song_dialog.dart';
 import 'package:on_audio_query/on_audio_query.dart';
@@ -25,7 +27,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final PlayerController contoller = Get.put(PlayerController());
-  final HomeSelectionController selController = Get.put(HomeSelectionController());
+  final HomeSelectionController selController =
+      Get.put(HomeSelectionController());
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -41,58 +44,26 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void _onScroll() {
-    if (selController.isDraggingScrollbar.value) return;
-    final songs = contoller.allsongs;
-    if (songs.isEmpty || !_scrollController.hasClients) return;
+  void _onScroll() => AlphabetScrollHelper.onScroll(
+        scrollController: _scrollController,
+        selController: selController,
+        songs: contoller.allsongs,
+      );
 
-    final double offset = _scrollController.offset;
-    final int topIndex = (offset / 78.0).floor().clamp(0, songs.length - 1);
-    final currentLetter = _getLetter(songs[topIndex].title);
-    if (selController.activeLetter.value != currentLetter) {
-      selController.setActiveLetter(currentLetter);
-    }
-  }
-
-  String _getLetter(String title) {
-    final clean = title.trim();
-    if (clean.isEmpty) return '#';
-    final first = clean[0].toUpperCase();
-    return RegExp(r'[A-Z]').hasMatch(first) ? first : '#';
-  }
-
-  void _scrollToLetter(String letter) {
-    final songs = contoller.allsongs;
-    if (songs.isEmpty || !_scrollController.hasClients) return;
-
-    final target = letter.toUpperCase();
-    int idx = -1;
-    if (target == '#') {
-      idx = songs.indexWhere((s) {
-        final t = s.title.trim();
-        return t.isNotEmpty && !RegExp(r'[a-zA-Z]').hasMatch(t[0]);
-      });
-    } else {
-      idx = songs.indexWhere((s) {
-        final t = s.title.trim();
-        if (t.isEmpty) return false;
-        final f = t[0].toUpperCase();
-        return RegExp(r'[A-Z]').hasMatch(f) && f.compareTo(target) >= 0;
-      });
-    }
-    if (idx == -1) idx = songs.length - 1;
-
-    final targetOffset = (idx * 78.0).clamp(0.0, _scrollController.position.maxScrollExtent);
-    _scrollController.jumpTo(targetOffset);
-  }
+  void _scrollToLetter(String letter) => AlphabetScrollHelper.scrollToLetter(
+        letter: letter,
+        scrollController: _scrollController,
+        songs: contoller.allsongs,
+      );
 
   void _shareSelectedSongs() {
     final toShare = contoller.allsongs
         .where((s) => selController.selectedSongIds.contains(s.id))
         .toList();
-    if (toShare.isEmpty) return;
-    HapticFeedback.lightImpact();
-    contoller.shareSongs(toShare);
+    if (toShare.isNotEmpty) {
+      HapticFeedback.lightImpact();
+      contoller.shareSongs(toShare);
+    }
   }
 
   void _confirmDeleteSelectedSongs() {
@@ -100,7 +71,6 @@ class _HomePageState extends State<HomePage> {
         .where((s) => selController.selectedSongIds.contains(s.id))
         .toList();
     if (toDelete.isEmpty) return;
-
     DeleteSongDialog.show(
       context: context,
       title: "Delete ${toDelete.length} Songs?",
@@ -146,29 +116,19 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: scaffoldBg,
           body: Obx(() {
             if (contoller.loading.value) {
-              return Center(child: CircularProgressIndicator(color: accentGreen));
+              return Center(
+                  child: CircularProgressIndicator(color: accentGreen));
             }
             if (contoller.allsongs.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.music_off_rounded, size: 48, color: textSecondary.withValues(alpha: 0.5)),
-                    const SizedBox(height: 12),
-                    Text("No songs found on device", style: TextStyle(fontSize: 15, color: textSecondary)),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => contoller.checkAndRequestPermission(),
-                      icon: const Icon(Icons.refresh_rounded, size: 18),
-                      label: const Text("Scan for Music / Grant Permission"),
-                      style: ElevatedButton.styleFrom(backgroundColor: accentGreen, foregroundColor: Colors.black),
-                    ),
-                  ],
-                ),
+              return HomeEmptyView(
+                textSecondary: textSecondary,
+                accentGreen: accentGreen,
+                onRefresh: () => contoller.checkAndRequestPermission(),
               );
             }
             if (selController.activeLetter.value == null) {
-              selController.setActiveLetter(_getLetter(contoller.allsongs.first.title));
+              selController.setActiveLetter(AlphabetScrollHelper.getLetter(
+                  contoller.allsongs.first.title));
             }
 
             return Stack(
@@ -191,51 +151,67 @@ class _HomePageState extends State<HomePage> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final song = contoller.allsongs[index];
-                          final isSelected = selController.selectedSongIds.contains(song.id);
 
-                          return Obx(() => MusicListtile(
-                                songUri: song.uri,
-                                songId: song.id,
-                                isCurrentSong: contoller.songUri == song.uri,
-                                isSelectionMode: selController.isSelectionMode,
-                                isSelected: isSelected,
-                                leading: QueryArtworkWidget(
-                                  id: song.id,
-                                  type: ArtworkType.AUDIO,
-                                  nullArtworkWidget: Container(
-                                    height: 45,
-                                    width: 45,
-                                    decoration: BoxDecoration(
-                                      color: isDark ? Colors.black54 : const Color(0xffe2e8f0),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(Icons.music_note, color: textPrimary, size: 26),
+                          return Obx(() {
+                            final isSelected =
+                                selController.selectedSongIds.contains(song.id);
+                            final isCurrent = contoller.hasActiveSong &&
+                                contoller.songUri == song.uri;
+                            final isPlaying =
+                                isCurrent && contoller.isplaying.value;
+
+                            return MusicListtile(
+                              songUri: song.uri,
+                              songId: song.id,
+                              isCurrentSong: isCurrent,
+                              isPlaying: isPlaying,
+                              isSelectionMode: selController.isSelectionMode,
+                              isSelected: isSelected,
+                              leading: QueryArtworkWidget(
+                                id: song.id,
+                                type: ArtworkType.AUDIO,
+                                nullArtworkWidget: Container(
+                                  height: 45,
+                                  width: 45,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.black54
+                                        : const Color(0xffe2e8f0),
+                                    shape: BoxShape.circle,
                                   ),
+                                  child: Icon(Icons.music_note,
+                                      color: textPrimary, size: 26),
                                 ),
-                                onPressed: () {
-                                  if (selController.isSelectionMode) {
-                                    selController.toggleSelectSong(song.id);
-                                  } else {
-                                    contoller.playOrNavigate(song, index, contoller.allsongs);
-                                  }
-                                },
-                                onLongPress: () => selController.toggleSelectSong(song.id),
-                                onMenuShare: () => contoller.shareSongs([song]),
-                                onMenuSelect: () => selController.addSong(song.id),
-                                onMenuDelete: () => DeleteSongDialog.show(
-                                  context: context,
-                                  title: "Delete Song?",
-                                  message: "Are you sure you want to permanently delete \"${song.title}\"?",
-                                  songsToDelete: [song],
-                                ),
-                                musicName: song.title,
-                                artistName: song.artist ?? "Unknown Artist",
-                                trailing: !selController.isSelectionMode &&
-                                        contoller.songUri == song.uri &&
-                                        contoller.isplaying.value
-                                    ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
-                                    : null,
-                              ));
+                              ),
+                              onPressed: () {
+                                if (selController.isSelectionMode) {
+                                  selController.toggleSelectSong(song.id);
+                                } else {
+                                  contoller.playOrNavigate(
+                                      song, index, contoller.allsongs);
+                                }
+                              },
+                              onLongPress: () =>
+                                  selController.toggleSelectSong(song.id),
+                              onMenuShare: () => contoller.shareSongs([song]),
+                              onMenuSelect: () =>
+                                  selController.addSong(song.id),
+                              onMenuDelete: () => DeleteSongDialog.show(
+                                context: context,
+                                title: "Delete Song?",
+                                message:
+                                    "Are you sure you want to permanently delete \"${song.title}\"?",
+                                songsToDelete: [song],
+                              ),
+                              musicName: song.title,
+                              artistName: song.artist ?? "Unknown Artist",
+                              trailing:
+                                  !selController.isSelectionMode && isPlaying
+                                      ? Icon(Icons.play_arrow_rounded,
+                                          size: 28, color: accentGreen)
+                                      : null,
+                            );
+                          });
                         },
                         childCount: contoller.allsongs.length,
                       ),

@@ -17,10 +17,13 @@ class HomeSelectionController extends GetxController {
     } else {
       selectedSongIds.add(songId);
     }
+    selectedSongIds.refresh();
   }
 
   void addSong(int songId) {
+    HapticFeedback.selectionClick();
     selectedSongIds.add(songId);
+    selectedSongIds.refresh();
   }
 
   void selectAll(Iterable<int> songIds) {
@@ -31,14 +34,17 @@ class HomeSelectionController extends GetxController {
       selectedSongIds.clear();
       selectedSongIds.addAll(songIds);
     }
+    selectedSongIds.refresh();
   }
 
   void clearSelection() {
     selectedSongIds.clear();
+    selectedSongIds.refresh();
   }
 
   void removeSongs(Iterable<int> songIds) {
     selectedSongIds.removeAll(songIds);
+    selectedSongIds.refresh();
   }
 
   void setDragging(bool dragging) {

@@ -53,9 +53,11 @@ class MusicListtile extends StatelessWidget {
 
         // Check if this tile is the currently active/playing song
         final bool isCurrent = isCurrentSong ??
-            ((songUri != null && playerController.songUri == songUri) ||
-                (songId != null &&
-                    playerController.currentSongId.value == songId));
+            (playerController.hasActiveSong &&
+                ((songUri != null && playerController.songUri == songUri) ||
+                    (songId != null &&
+                        songId! > 0 &&
+                        playerController.currentSongId.value == songId)));
 
         // Highlight text color for current playing/active song
         final titleColor =
@@ -181,6 +183,7 @@ class MusicListtile extends StatelessWidget {
                 ),
                 PopupMenuItem(
                   value: "select",
+                  onTap: onMenuSelect,
                   child: Row(
                     children: [
                       Icon(Icons.checklist_rounded,

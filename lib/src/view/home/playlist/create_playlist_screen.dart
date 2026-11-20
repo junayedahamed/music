@@ -18,30 +18,20 @@ class CreatePlaylistScreen extends StatelessWidget {
     this.initialSelectedIds,
   });
 
-  void _savePlaylist(
-    BuildContext context,
-    PlaylistEditorController editorController,
-    PlaylistController playlistController,
-    ThemeController themeController,
-  ) {
+  void _savePlaylist(BuildContext context, PlaylistEditorController editorController, PlaylistController playlistController, ThemeController themeController) {
     HapticFeedback.lightImpact();
     final ids = editorController.selectedSongIds.toList();
-    final isNew = !playlistController.playlists.containsKey(playlistName);
-    if (isNew) {
+    if (!playlistController.playlists.containsKey(playlistName)) {
       playlistController.createPlaylist(playlistName, ids);
     } else {
       playlistController.setPlaylistSongs(playlistName, ids);
     }
-
     Navigator.of(context).pop();
     Get.snackbar(
-      "Playlist Saved",
-      "Saved ${ids.length} songs to '$playlistName'",
-      backgroundColor: themeController.cardBg,
-      colorText: themeController.textPrimary,
+      "Playlist Saved", "Saved ${ids.length} songs to '$playlistName'",
+      backgroundColor: themeController.cardBg, colorText: themeController.textPrimary,
       icon: Icon(Icons.check_circle_rounded, color: themeController.accentGreen),
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
+      snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 2),
     );
   }
 

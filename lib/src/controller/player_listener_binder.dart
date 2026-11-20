@@ -22,6 +22,8 @@ class PlayerListenerBinder {
     required RxDouble max,
     required RxString position,
     required RxDouble value,
+    required bool Function() hasActiveSong,
+    required bool Function() isRestoring,
     required List<SongModel> Function() getActiveList,
     required Function(SongModel song) onSongChanged,
     required Function() onSaveCache,
@@ -32,7 +34,7 @@ class PlayerListenerBinder {
     subs.add(audioHandler.playbackState.listen((s) {
       isplaying.value = s.playing;
       playbackSpeed.value = s.speed;
-      if (s.queueIndex != null) {
+      if (s.queueIndex != null && hasActiveSong()) {
         final list = getActiveList();
         if (s.queueIndex! >= 0 &&
             s.queueIndex! < list.length &&
@@ -50,7 +52,7 @@ class PlayerListenerBinder {
     }));
 
     subs.add(audioHandler.mediaItem.listen((item) {
-      if (item != null) {
+      if (item != null && hasActiveSong()) {
         songname.value = item.title;
         artistName.value = item.artist ?? "Unknown Artist";
         currentSongUri.value = item.id;
@@ -70,17 +72,26 @@ class PlayerListenerBinder {
     }));
 
     subs.add(player.durationStream.listen((d) {
-      duration.value = (d != null && d.inSeconds > 0) ? DurationFormatter.format(d) : "0:00";
-      max.value = (d != null && d.inSeconds > 0) ? d.inSeconds.toDouble() : 0.0;
+      if (!hasActiveSong()) return;
+      if (d != null && d.inSeconds > 0) {
+        duration.value = DurationFormatter.format(d);
+        max.value = d.inSeconds.toDouble();
+      }
     }));
 
     subs.add(player.positionStream.listen((p) {
-      position.value = DurationFormatter.format(p);
-      final sec = p.inSeconds.toDouble();
-      value.value = sec.clamp(0.0, max.value > 0 ? max.value : sec);
-      if ((sec - lastSavedPositionSec).abs() >= 5.0) {
-        lastSavedPositionSec = sec;
-        onSaveCache();
+      if (!hasActiveSong()) return;
+      if (isRestoring() && p == Duration.zero && value.value > 0) {
+        return; // Guard against ExoPlayer startup 0 position reset
+      }
+      final sec = p.inMilliseconds / 1000.0;
+      if (player.playing || sec > 0.05 || !isRestoring()) {
+        position.value = DurationFormatter.format(p);
+        value.value = sec.clamp(0.0, max.value > 0 ? max.value : sec);
+        if ((sec - lastSavedPositionSec).abs() >= 3.0) {
+          lastSavedPositionSec = sec;
+          onSaveCache();
+        }
       }
     }));
 

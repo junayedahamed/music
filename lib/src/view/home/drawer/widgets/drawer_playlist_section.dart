@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:music/src/controller/playlist_controller.dart';
 import 'package:music/src/controller/theme_controller.dart';
-import 'package:music/src/view/home/playlist/create_playlist_screen.dart';
 import 'package:music/src/view/home/playlist/playlist_detail_screen.dart';
+import 'package:music/src/view/home/playlist/widgets/create_playlist_dialog.dart';
 
 class DrawerPlaylistSection extends StatelessWidget {
   final PlaylistController playlistController;
@@ -42,7 +41,8 @@ class DrawerPlaylistSection extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () => _showCreatePlaylistDialog(context),
+                onTap: () =>
+                    CreatePlaylistDialog.show(context, themeController),
                 child: Row(
                   children: [
                     Icon(Icons.add_rounded, color: accentGreen, size: 16),
@@ -65,9 +65,10 @@ class DrawerPlaylistSection extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: () => _showCreatePlaylistDialog(context),
+              onTap: () => CreatePlaylistDialog.show(context, themeController),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(14),
@@ -81,7 +82,8 @@ class DrawerPlaylistSection extends StatelessWidget {
                         color: accentGreen.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.add_rounded, color: accentGreen, size: 20),
+                      child:
+                          Icon(Icons.add_rounded, color: accentGreen, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -98,7 +100,8 @@ class DrawerPlaylistSection extends StatelessWidget {
                           ),
                           Text(
                             "Select songs from your device library",
-                            style: TextStyle(color: textSecondary, fontSize: 11),
+                            style:
+                                TextStyle(color: textSecondary, fontSize: 11),
                           ),
                         ],
                       ),
@@ -121,10 +124,12 @@ class DrawerPlaylistSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
                       Navigator.of(context).pop();
-                      Get.to(() => PlaylistDetailScreen(playlistName: entry.key));
+                      Get.to(
+                          () => PlaylistDetailScreen(playlistName: entry.key));
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: cardAltBg,
                         borderRadius: BorderRadius.circular(12),
@@ -132,7 +137,8 @@ class DrawerPlaylistSection extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.queue_music_rounded, color: accentGreen, size: 22),
+                          Icon(Icons.queue_music_rounded,
+                              color: accentGreen, size: 22),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -148,14 +154,16 @@ class DrawerPlaylistSection extends StatelessWidget {
                                 ),
                                 Text(
                                   "${entry.value.length} songs",
-                                  style: TextStyle(color: textSecondary, fontSize: 11),
+                                  style: TextStyle(
+                                      color: textSecondary, fontSize: 11),
                                 ),
                               ],
                             ),
                           ),
                           IconButton(
                             icon: Icon(Icons.delete_outline_rounded,
-                                color: textSecondary.withValues(alpha: 0.6), size: 18),
+                                color: textSecondary.withValues(alpha: 0.6),
+                                size: 18),
                             onPressed: () {
                               playlistController.deletePlaylist(entry.key);
                             },
@@ -171,80 +179,5 @@ class DrawerPlaylistSection extends StatelessWidget {
         ],
       );
     });
-  }
-
-  void _showCreatePlaylistDialog(BuildContext context) {
-    final textController = TextEditingController();
-    final cardBg = themeController.cardBg;
-    final textPrimary = themeController.textPrimary;
-    final textSecondary = themeController.textSecondary;
-    final accentGreen = themeController.accentGreen;
-    final isDark = themeController.isDarkMode.value;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Row(
-          children: [
-            Icon(Icons.playlist_add_rounded, color: accentGreen),
-            const SizedBox(width: 8),
-            Text(
-              "Create Playlist",
-              style: GoogleFonts.acme(color: textPrimary, fontSize: 20),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Enter a name for your playlist. You will choose songs next.",
-              style: TextStyle(color: textSecondary, fontSize: 12.5),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: textController,
-              autofocus: true,
-              style: TextStyle(color: textPrimary),
-              decoration: InputDecoration(
-                hintText: "Playlist name (e.g. Chill Beats)",
-                hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
-                filled: true,
-                fillColor: isDark ? const Color(0xff161822) : const Color(0xfff3f4f8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: accentGreen, width: 1.5),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text("Cancel", style: TextStyle(color: textSecondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              final name = textController.text.trim();
-              if (name.isNotEmpty) {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-                Get.to(() => CreatePlaylistScreen(playlistName: name));
-              }
-            },
-            child: Text("Next: Choose Songs",
-                style: TextStyle(color: accentGreen, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
   }
 }

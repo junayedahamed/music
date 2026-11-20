@@ -9,14 +9,44 @@ class AudioCacheService {
     _box = box;
   }
 
+  static bool isValidSession(Map? d) {
+    if (d == null) return false;
+    final id = (d["songId"] as num?)?.toInt();
+    final uri = d["songUri"] as String?;
+    return (id != null && id > 0) || (uri != null && uri.isNotEmpty);
+  }
+
+  static bool hasValidSession() {
+    try {
+      final d = _box.get("last_session") ?? _box.get("data");
+      return isValidSession(d);
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Map? getLastSessionData() {
-    return _box.get("last_session") ?? _box.get("data");
+    try {
+      final d = _box.get("last_session") ?? _box.get("data");
+      return isValidSession(d) ? d : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> saveSessionData(Map<String, dynamic> data) async {
     try {
-      await _box.put("last_session", data);
-      await _box.put("data", data);
+      if (isValidSession(data)) {
+        await _box.put("last_session", data);
+        await _box.put("data", data);
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> clearSessionData() async {
+    try {
+      await _box.delete("last_session");
+      await _box.delete("data");
     } catch (_) {}
   }
 

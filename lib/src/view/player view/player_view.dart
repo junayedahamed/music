@@ -41,16 +41,18 @@ class Player extends StatelessWidget {
           ? controller.currentPlaylist
           : songs;
       final idx = controller.playindex.value;
-      final safeSong = (idx >= 0 &&
-              idx < activeSongs.length &&
-              activeSongs[idx].uri == controller.songUri)
-          ? activeSongs[idx]
-          : (activeSongs.firstWhereOrNull((s) =>
-                  s.uri == controller.songUri ||
-                  s.id == controller.currentSongId.value) ??
-              ((idx >= 0 && idx < activeSongs.length)
-                  ? activeSongs[idx]
-                  : null));
+      final safeSong = controller.hasActiveSong
+          ? ((idx >= 0 &&
+                  idx < activeSongs.length &&
+                  activeSongs[idx].uri == controller.songUri)
+              ? activeSongs[idx]
+              : (activeSongs.firstWhereOrNull((s) =>
+                      s.uri == controller.songUri ||
+                      s.id == controller.currentSongId.value) ??
+                  ((idx >= 0 && idx < activeSongs.length)
+                      ? activeSongs[idx]
+                      : null)))
+          : null;
       final title = safeSong?.title ?? controller.songname.value;
       final artist = safeSong?.artist ?? controller.artistName.value;
       final songId = safeSong?.id ?? controller.currentSongId.value;
