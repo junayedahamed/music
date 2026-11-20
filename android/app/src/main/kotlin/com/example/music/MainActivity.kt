@@ -27,6 +27,16 @@ class MainActivity: AudioServiceActivity() {
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
 
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC
+    }
+
+    override fun onResume() {
+        super.onResume()
+        volumeControlStream = AudioManager.STREAM_MUSIC
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -174,10 +184,10 @@ class MainActivity: AudioServiceActivity() {
     private fun initAudioEffects() {
         try {
             if (equalizer == null) {
-                equalizer = Equalizer(0, 0).apply { enabled = true }
+                equalizer = Equalizer(0, 0)
             }
             if (bassBoost == null) {
-                bassBoost = BassBoost(0, 0).apply { enabled = true }
+                bassBoost = BassBoost(0, 0)
             }
         } catch (_: Exception) {}
     }
@@ -193,6 +203,10 @@ class MainActivity: AudioServiceActivity() {
         if (!isHeadphoneConnected()) {
             disableEqualizer()
             return false
+        }
+        if (presetName.equals("Normal", ignoreCase = true)) {
+            disableEqualizer()
+            return true
         }
         return try {
             initAudioEffects()
@@ -278,11 +292,14 @@ class MainActivity: AudioServiceActivity() {
     }
 
     private fun applyBassBoost(strength: Int): Boolean {
-        if (!isHeadphoneConnected()) return false
+        if (!isHeadphoneConnected() || strength <= 0) {
+            bassBoost?.enabled = false
+            return false
+        }
         return try {
             initAudioEffects()
             bassBoost?.let {
-                it.enabled = strength > 0
+                it.enabled = true
                 it.setStrength(strength.coerceIn(0, 1000).toShort())
                 true
             } ?: false

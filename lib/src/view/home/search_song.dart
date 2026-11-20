@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/controller/theme_controller.dart';
 import 'package:music/src/view/music%20tile/music_listtile.dart';
+import 'package:music/src/view/widgets/delete_song_dialog.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class SearchSong extends SearchDelegate {
@@ -12,83 +13,12 @@ class SearchSong extends SearchDelegate {
   final controller = Get.find<PlayerController>();
 
   void _confirmDeleteSong(BuildContext context, SongModel song) {
-    final themeController = Get.find<ThemeController>();
-    showDialog(
+    DeleteSongDialog.show(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: themeController.cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: themeController.borderColor),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.warning_amber_rounded,
-                  color: Colors.redAccent,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  "Delete Song?",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: themeController.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
-            style: TextStyle(
-              fontSize: 13.5,
-              color: themeController.textSecondary,
-              height: 1.4,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  color: themeController.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.delete_forever_rounded, size: 18),
-              label: const Text(
-                "Delete Permanently",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                await controller.deleteSongs([song]);
-              },
-            ),
-          ],
-        );
-      },
+      title: "Delete Song?",
+      message:
+          "Are you sure you want to permanently delete \"${song.title}\" from your device's memory? This file will be completely erased and cannot be recovered.",
+      songsToDelete: [song],
     );
   }
 
@@ -122,9 +52,7 @@ class SearchSong extends SearchDelegate {
     final themeController = Get.find<ThemeController>();
     return [
       IconButton(
-        onPressed: () {
-          query = '';
-        },
+        onPressed: () => query = '',
         icon: Icon(Icons.clear_rounded, color: themeController.textPrimary),
       )
     ];
@@ -134,27 +62,30 @@ class SearchSong extends SearchDelegate {
   Widget? buildLeading(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     return IconButton(
-      onPressed: () {
-        Navigator.pop(context);
-      },
+      onPressed: () => Navigator.pop(context),
       icon: Icon(Icons.arrow_back_ios_new_rounded,
           color: themeController.textPrimary, size: 20),
     );
   }
 
   @override
-  Widget buildResults(BuildContext context) {
+  Widget buildResults(BuildContext context) => _buildSongList(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildSongList(context);
+
+  Widget _buildSongList(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode.value;
     final textPrimary = themeController.textPrimary;
     final accentGreen = themeController.accentGreen;
 
-    final List<SongModel> searchResult = songs.where((item) {
+    final List<SongModel> filtered = songs.where((item) {
       return item.title.toLowerCase().contains(query.toLowerCase()) ||
           (item.artist ?? "").toLowerCase().contains(query.toLowerCase());
     }).toList();
 
-    if (searchResult.isEmpty) {
+    if (filtered.isEmpty) {
       return Center(
         child: Text(
           "No songs found matching '$query'",
@@ -165,66 +96,9 @@ class SearchSong extends SearchDelegate {
 
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      itemCount: searchResult.length,
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final song = searchResult[index];
-        return Obx(() {
-          final isCurrent = controller.songUri == song.uri;
-          final isPlaying = isCurrent && controller.isplaying.value;
-
-          return MusicListtile(
-            songUri: song.uri,
-            songId: song.id,
-            isCurrentSong: isCurrent,
-            isPlaying: isPlaying,
-            leading: QueryArtworkWidget(
-              id: song.id,
-              type: ArtworkType.AUDIO,
-              nullArtworkWidget: Container(
-                height: 45,
-                width: 45,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black54 : const Color(0xffe2e8f0),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.music_note, color: textPrimary, size: 26),
-              ),
-            ),
-            onPressed: () {
-              final origIdx = songs.indexWhere((s) => s.id == song.id);
-              controller.playOrNavigate(
-                  song, origIdx >= 0 ? origIdx : index, songs);
-            },
-            musicName: song.title,
-            artistName: song.artist ?? "Unknown Artist",
-            onMenuShare: () => controller.shareSongs([song]),
-            onMenuDelete: () => _confirmDeleteSong(context, song),
-            trailing: isPlaying
-                ? Icon(Icons.play_arrow_rounded, size: 28, color: accentGreen)
-                : null,
-          );
-        });
-      },
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode.value;
-    final textPrimary = themeController.textPrimary;
-    final accentGreen = themeController.accentGreen;
-
-    final List<SongModel> searchSuggestion = songs.where((item) {
-      return item.title.toLowerCase().contains(query.toLowerCase()) ||
-          (item.artist ?? "").toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      itemCount: searchSuggestion.length,
-      itemBuilder: (context, index) {
-        final song = searchSuggestion[index];
+        final song = filtered[index];
         return Obx(() {
           final isCurrent = controller.songUri == song.uri;
           final isPlaying = isCurrent && controller.isplaying.value;

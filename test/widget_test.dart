@@ -1,29 +1,24 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:music/app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  test('MediaItem correctly maps music metadata', () {
+    final item = MediaItem(
+      id: 'content://media/external/audio/media/101',
+      title: 'Echoes of Silence',
+      artist: 'The Weeknd',
+      album: 'Trilogy',
+      duration: const Duration(minutes: 4, seconds: 2),
+      artUri: Uri.parse('file:///data/user/0/com.example.music/files/art.png'),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(item.id, 'content://media/external/audio/media/101');
+    expect(item.title, 'Echoes of Silence');
+    expect(item.artist, 'The Weeknd');
+    expect(item.album, 'Trilogy');
+    expect(item.duration?.inSeconds, 242);
+    expect(item.artUri?.scheme, 'file');
   });
 }

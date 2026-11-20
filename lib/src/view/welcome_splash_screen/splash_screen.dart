@@ -1,11 +1,11 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:music/src/controller/audio_controller.dart';
 import 'package:music/src/controller/theme_controller.dart';
 import 'package:music/src/view/home/home_view.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:music/src/view/welcome_splash_screen/widgets/animated_sound_wave_bars.dart';
+import 'package:music/src/view/welcome_splash_screen/widgets/vinyl_emblem_widget.dart';
 
 class SplashScreenMusic extends StatefulWidget {
   const SplashScreenMusic({super.key});
@@ -20,7 +20,6 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
   late final ThemeController _themeController;
   late final AnimationController _animController;
   late final Animation<double> _pulseAnimation;
-  // late final Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -37,13 +36,6 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
 
-    // _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-    //   CurvedAnimation(
-    //     parent: _animController,
-    //     curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
-    //   ),
-    // );
-
     _permission();
   }
 
@@ -55,20 +47,12 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
 
   Future<void> _permission() async {
     try {
-      final audioGranted = await Permission.audio.isGranted;
-      final storageGranted = await Permission.storage.isGranted;
-      if (audioGranted || storageGranted) {
-        _navigate();
-        return;
-      }
+      await _controller.checkAndRequestPermission();
     } catch (_) {}
-
-    await _controller.checkAndRequestPermission();
     _navigate();
   }
 
   void _navigate() async {
-    // Snappy, professional splash delay (300ms instead of 1600ms)
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       Navigator.of(context).pushReplacement(
@@ -97,7 +81,6 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
         backgroundColor: scaffoldBg,
         body: Stack(
           children: [
-            // Ambient background radial glow
             Positioned(
               top: MediaQuery.of(context).size.height * 0.25,
               left: MediaQuery.of(context).size.width * 0.1,
@@ -126,92 +109,17 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
                 },
               ),
             ),
-
-            // Center Branding & Audio Icon
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated glowing vinyl disc / soundwave emblem
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _pulseAnimation.value,
-                        child: child,
-                      );
-                    },
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDark ? const Color(0xff121824) : Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: accentBlue.withValues(
-                                alpha: isDark ? 0.35 : 0.2),
-                            blurRadius: 36,
-                            spreadRadius: 4,
-                            offset: const Offset(0, 8),
-                          ),
-                          BoxShadow(
-                            color: accentGreen.withValues(
-                                alpha: isDark ? 0.25 : 0.15),
-                            blurRadius: 28,
-                            spreadRadius: 2,
-                            offset: const Offset(0, -4),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: accentBlue.withValues(alpha: 0.4),
-                          width: 2.0,
-                        ),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Concentric vinyl groove circles
-                          CustomPaint(
-                            size: const Size(140, 140),
-                            painter: _VinylGroovesPainter(
-                              grooveColor: isDark
-                                  ? Colors.white.withValues(alpha: 0.05)
-                                  : Colors.black.withValues(alpha: 0.04),
-                            ),
-                          ),
-
-                          // Inner circular disc with app logo
-                          Container(
-                            width: 82,
-                            height: 82,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accentBlue.withValues(alpha: 0.5),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                width: 1.5,
-                              ),
-                              image: const DecorationImage(
-                                image: AssetImage('assets/applogo.png'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  VinylEmblemWidget(
+                    pulseAnimation: _pulseAnimation,
+                    isDark: isDark,
+                    accentBlue: accentBlue,
+                    accentGreen: accentGreen,
                   ),
-
                   const SizedBox(height: 36),
-
-                  // Brand Title
                   Text(
                     "MUSIC",
                     style: GoogleFonts.acme(
@@ -221,16 +129,12 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
                       color: textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 6),
-
-                  // Sound equalizer wave animation bars
-                  _AnimatedSoundWaveBars(
-                      accentBlue: accentBlue, isDark: isDark),
-
+                  AnimatedSoundWaveBars(
+                    accentBlue: accentBlue,
+                    isDark: isDark,
+                  ),
                   const SizedBox(height: 12),
-
-                  // Subtitle
                   Text(
                     "OFFLINE AUDIO STUDIO",
                     style: TextStyle(
@@ -243,8 +147,6 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
                 ],
               ),
             ),
-
-            // Bottom loading status & version
             Positioned(
               bottom: 40,
               left: 0,
@@ -279,84 +181,5 @@ class _SplashScreenMusicState extends State<SplashScreenMusic>
         ),
       );
     });
-  }
-}
-
-/// Custom painter for sleek concentric vinyl grooves
-class _VinylGroovesPainter extends CustomPainter {
-  final Color grooveColor;
-  _VinylGroovesPainter({required this.grooveColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = grooveColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radii = [50.0, 56.0, 62.0];
-    for (final r in radii) {
-      canvas.drawCircle(center, r, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _VinylGroovesPainter oldDelegate) => false;
-}
-
-/// Animated 5-bar soundwave visualizer below the logo
-class _AnimatedSoundWaveBars extends StatefulWidget {
-  final Color accentBlue;
-  final bool isDark;
-  const _AnimatedSoundWaveBars(
-      {required this.accentBlue, required this.isDark});
-
-  @override
-  State<_AnimatedSoundWaveBars> createState() => _AnimatedSoundWaveBarsState();
-}
-
-class _AnimatedSoundWaveBarsState extends State<_AnimatedSoundWaveBars>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _waveController;
-
-  @override
-  void initState() {
-    super.initState();
-    _waveController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _waveController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _waveController,
-      builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (index) {
-            final t = (_waveController.value + index * 0.2) % 1.0;
-            final height = 4.0 + 12.0 * math.sin(t * math.pi);
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2.5),
-              width: 3.5,
-              height: height,
-              decoration: BoxDecoration(
-                color: widget.accentBlue.withValues(alpha: 0.75),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            );
-          }),
-        );
-      },
-    );
   }
 }
